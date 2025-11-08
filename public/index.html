@@ -90,7 +90,7 @@
         let state = {
             clients: [],
             projects: [],
-            allProjects: [], // All projects across all clients for orders dropdown
+            allProjects: [], // All projects across all clients with full data
             suppliers: [],
             orders: [],
             selectedClient: null,
@@ -107,8 +107,9 @@
             editingSupplier: null,
             editingOrder: null,
             viewingAttachment: null,
-            view: 'clients', // 'clients', 'projects', 'suppliers', 'orders'
+            view: 'clients', // 'clients', 'projects', 'suppliers', 'orders', 'all-projects'
             projectStatusFilter: 'all', // 'all' or specific status
+            allProjectsStatusFilter: 'all', // Status filter for all-projects view
             ordersViewTab: 'all', // 'all' or 'by-project'
             user: null, // Firebase auth user
             loading: true, // Loading state
@@ -376,9 +377,10 @@
                 
                 // Setup activity tracking for authenticated users
                 setupActivityTracking();
-                
+
                 // Load data when user is authenticated and authorized
                 loadClients();
+                loadAllProjects(); // Load all projects at startup
                 // Initialize suppliers and orders arrays if not already set
                 if (!state.suppliers) {
                     state.suppliers = [];
@@ -908,38 +910,52 @@
         }
 
         // ===== ORDER FUNCTIONS =====
-        
+
         async function loadAllProjects() {
             if (!state.user) {
                 console.log('Cannot load all projects: user not authenticated');
                 return;
             }
-            
+
             // Check if already loaded (cache)
             if (state.allProjects && state.allProjects.length > 0) {
                 console.log('Using cached projects list');
                 return;
             }
-            
+
             try {
-                console.log('Loading all projects (minimal data for orders dropdown)...');
-                // Only fetch the fields we need: name and clientId
+                console.log('Loading all projects with full data...');
                 const snapshot = await db.collection('projects').get();
-                
-                state.allProjects = snapshot.docs.map(doc => {
+
+                state.allProjects = await Promise.all(snapshot.docs.map(async doc => {
                     const data = doc.data();
                     const client = state.clients.find(c => c.id === data.clientId);
+
+                    // Load invoices for this project to calculate totals
+                    const invoices = await loadInvoices(doc.id);
+
                     return {
                         id: doc.id,
-                        name: data.name,
-                        clientId: data.clientId,
-                        clientName: client ? client.name : 'Unknown'
+                        ...data,
+                        clientName: client ? client.name : 'לקוח לא ידוע',
+                        invoices: invoices
                     };
+                }));
+
+                // Sort by creation date (newest first)
+                state.allProjects.sort((a, b) => {
+                    const aTime = a.createdAt?.toDate ? a.createdAt.toDate() : (a.createdAt || new Date(0));
+                    const bTime = b.createdAt?.toDate ? b.createdAt.toDate() : (b.createdAt || new Date(0));
+                    return bTime - aTime;
                 });
-                
-                console.log('Loaded projects (minimal):', state.allProjects.length);
+
+                console.log('Loaded all projects:', state.allProjects.length);
+                render();
             } catch (error) {
                 console.error('Error loading all projects:', error);
+                if (state.user) {
+                    alert('שגיאה בטעינת כל הפרויקטים: ' + error.message);
+                }
             }
         }
 
@@ -2966,6 +2982,12 @@
                     loadAllProjects();
                 }
                 app.innerHTML = renderWorkScheduleView();
+            } else if (state.view === 'all-projects') {
+                // Ensure all projects are loaded
+                if (state.user && (!state.allProjects || state.allProjects.length === 0)) {
+                    loadAllProjects();
+                }
+                app.innerHTML = renderAllProjectsView();
             } else if (state.selectedProject) {
                 app.innerHTML = renderInvoiceView();
             } else {
@@ -3055,23 +3077,23 @@
                     <!-- Navigation Tabs -->
                     <div class="mb-6">
                         <div class="flex border-b border-gray-200">
-                            <button onclick="state.view = 'clients'; updateHistory(); render()" 
+                            <button onclick="state.view = 'clients'; updateHistory(); render()"
                                 class="px-6 py-3 text-sm font-medium border-b-2 border-blue-500 text-blue-600 bg-blue-50">
                                 לקוחות
                             </button>
-                            <button onclick="showProjectsView()" 
+                            <button onclick="state.view = 'all-projects'; updateHistory(); render()"
                                 class="px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
-                                פרויקטים
+                                כל הפרויקטים
                             </button>
-                            <button onclick="showSuppliersView()" 
+                            <button onclick="showSuppliersView()"
                                 class="px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
                                 ספקים
                             </button>
-                            <button onclick="showOrdersView()" 
+                            <button onclick="showOrdersView()"
                                 class="px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
                                 הזמנות
                             </button>
-                            <button onclick="showWorkScheduleView()" 
+                            <button onclick="showWorkScheduleView()"
                                 class="px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
                                 סידור עבודה
                             </button>
@@ -3356,7 +3378,175 @@
                 </div>
             `;
         }
-        
+
+        function renderAllProjectsView() {
+            // Filter projects by status
+            const filteredProjects = state.allProjects.filter(project =>
+                state.allProjectsStatusFilter === 'all' || project.status === state.allProjectsStatusFilter
+            );
+
+            // Group projects by client
+            const projectsByClient = {};
+            filteredProjects.forEach(project => {
+                const clientId = project.clientId;
+                if (!projectsByClient[clientId]) {
+                    projectsByClient[clientId] = {
+                        clientName: project.clientName,
+                        projects: []
+                    };
+                }
+                projectsByClient[clientId].projects.push(project);
+            });
+
+            // Calculate total stats
+            const totalProjects = filteredProjects.length;
+            const totalRevenue = filteredProjects.reduce((sum, p) => sum + (p.revenue || 0), 0);
+            const totalExpenses = filteredProjects.reduce((sum, p) => {
+                const projectExpenses = (p.invoices || []).reduce((s, inv) => s + inv.amount, 0);
+                return sum + projectExpenses;
+            }, 0);
+            const totalProfit = totalRevenue - totalExpenses;
+
+            return `
+                <div class="max-w-7xl mx-auto p-6">
+                    <!-- Header -->
+                    <div class="mb-6 flex items-center justify-between">
+                        <h1 class="text-3xl font-bold text-gray-800">כל הפרויקטים</h1>
+                        <button onclick="state.view = 'clients'; updateHistory(); render()"
+                            class="text-blue-600 hover:text-blue-700 flex items-center gap-2">
+                            <span class="text-2xl">←</span>
+                            <span>חזרה ללקוחות</span>
+                        </button>
+                    </div>
+
+                    <!-- Navigation Tabs -->
+                    <div class="mb-6">
+                        <div class="flex border-b border-gray-200">
+                            <button onclick="state.view = 'clients'; updateHistory(); render()"
+                                class="px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                                לקוחות
+                            </button>
+                            <button onclick="state.view = 'all-projects'; updateHistory(); render()"
+                                class="px-6 py-3 text-sm font-medium border-b-2 border-blue-500 text-blue-600 bg-blue-50">
+                                כל הפרויקטים
+                            </button>
+                            <button onclick="showSuppliersView()"
+                                class="px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                                ספקים
+                            </button>
+                            <button onclick="showOrdersView()"
+                                class="px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                                הזמנות
+                            </button>
+                            <button onclick="showWorkScheduleView()"
+                                class="px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                                סידור עבודה
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Summary Cards -->
+                    <div class="grid grid-cols-4 gap-4 mb-6">
+                        <div class="bg-white p-4 rounded-lg shadow">
+                            <div class="text-sm text-gray-600 mb-1">סה"כ פרויקטים</div>
+                            <div class="text-2xl font-bold text-gray-800">${totalProjects}</div>
+                        </div>
+                        <div class="bg-blue-50 p-4 rounded-lg shadow">
+                            <div class="text-sm text-gray-600 mb-1">סה"כ הכנסות</div>
+                            <div class="text-2xl font-bold text-blue-600">₪${totalRevenue.toLocaleString()}</div>
+                        </div>
+                        <div class="bg-red-50 p-4 rounded-lg shadow">
+                            <div class="text-sm text-gray-600 mb-1">סה"כ הוצאות</div>
+                            <div class="text-2xl font-bold text-red-600">₪${totalExpenses.toLocaleString()}</div>
+                        </div>
+                        <div class="${totalProfit >= 0 ? 'bg-green-50' : 'bg-red-50'} p-4 rounded-lg shadow">
+                            <div class="text-sm text-gray-600 mb-1">רווח כולל</div>
+                            <div class="text-2xl font-bold ${totalProfit >= 0 ? 'text-green-600' : 'text-red-600'}">₪${totalProfit.toLocaleString()}</div>
+                        </div>
+                    </div>
+
+                    <!-- Status Filter -->
+                    <div class="bg-white rounded-lg shadow-lg p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-2xl font-bold text-gray-800">פרויקטים לפי לקוח</h2>
+                            <select onchange="state.allProjectsStatusFilter = this.value; render()"
+                                class="px-3 py-2 border rounded-lg bg-white">
+                                <option value="all" ${state.allProjectsStatusFilter === 'all' ? 'selected' : ''}>כל הסטטוסים</option>
+                                ${projectStatuses.map(status =>
+                                    `<option value="${status}" ${state.allProjectsStatusFilter === status ? 'selected' : ''}>${status}</option>`
+                                ).join('')}
+                            </select>
+                        </div>
+
+                        ${filteredProjects.length === 0 ? `
+                            <div class="text-center py-12 text-gray-400">
+                                <p class="text-xl">אין פרויקטים להצגה</p>
+                            </div>
+                        ` : `
+                            <div class="space-y-6">
+                                ${Object.keys(projectsByClient).map(clientId => {
+                                    const group = projectsByClient[clientId];
+                                    return `
+                                        <div class="border-2 border-gray-200 rounded-lg p-4 bg-gradient-to-r from-gray-50 to-white">
+                                            <h3 class="text-xl font-bold text-gray-800 mb-4 pb-2 border-b-2 border-blue-500">
+                                                ${group.clientName}
+                                                <span class="text-sm font-normal text-gray-600">(${group.projects.length} פרויקטים)</span>
+                                            </h3>
+                                            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                                ${group.projects.map(project => {
+                                                    const { totalExpenses, profit, profitMargin } = calculateTotals(project);
+                                                    return `
+                                                        <div class="p-4 rounded-lg bg-white border-2 border-gray-200 hover:border-blue-400 transition cursor-pointer"
+                                                            onclick="selectClient('${project.clientId}'); selectProject('${project.id}')">
+                                                            <div class="flex justify-between items-start mb-2">
+                                                                <div class="flex-1">
+                                                                    <h4 class="font-bold text-lg">${project.name}</h4>
+                                                                    ${project.description ? `<p class="text-sm text-gray-600 mt-1 line-clamp-2">${project.description}</p>` : ''}
+                                                                    <div class="flex items-center gap-2 mt-1">
+                                                                        <span class="text-xs px-2 py-1 rounded ${
+                                                                            project.status === 'פתוח' ? 'bg-blue-100 text-blue-800' :
+                                                                            project.status === 'אומדן' ? 'bg-purple-100 text-purple-800' :
+                                                                            project.status === 'הזמנה' ? 'bg-yellow-100 text-yellow-800' :
+                                                                            project.status === 'בביצוע' ? 'bg-orange-100 text-orange-800' :
+                                                                            project.status === 'חשבון' ? 'bg-pink-100 text-pink-800' :
+                                                                            project.status === 'לתשלום' ? 'bg-indigo-100 text-indigo-800' :
+                                                                            project.status === 'שולם' ? 'bg-green-100 text-green-800' :
+                                                                            'bg-gray-100 text-gray-800'
+                                                                        }">${project.status}</span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="text-sm space-y-2 mt-3">
+                                                                <div class="flex justify-between">
+                                                                    <span class="text-gray-600">הוצאות:</span>
+                                                                    <span class="font-semibold text-red-600">₪${totalExpenses.toLocaleString()}</span>
+                                                                </div>
+                                                                <div class="flex justify-between">
+                                                                    <span class="text-gray-600">הכנסות:</span>
+                                                                    <span class="font-semibold text-blue-600">₪${project.revenue.toLocaleString()}</span>
+                                                                </div>
+                                                                <div class="flex justify-between pt-2 border-t ${profit >= 0 ? 'text-green-600' : 'text-red-600'}">
+                                                                    <span class="font-bold">רווח:</span>
+                                                                    <span class="font-bold">₪${profit.toLocaleString()}</span>
+                                                                </div>
+                                                                <div class="text-xs text-center ${profit >= 0 ? 'text-green-600' : 'text-red-600'}">
+                                                                    ${profitMargin.toFixed(1)}% רווחיות
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    `;
+                                                }).join('')}
+                                            </div>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        `}
+                    </div>
+                </div>
+            `;
+        }
+
         function renderWorkScheduleView() {
             // Helper functions for calendar
             const getWeekDates = (date) => {
