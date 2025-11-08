@@ -1,0 +1,42 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Require authentication for all operations
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Specific rules for better security
+    match /clients/{clientId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    match /projects/{projectId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    match /invoices/{invoiceId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Rules for suppliers
+    match /suppliers/{supplierId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Rules for orders
+    match /orders/{orderId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Rules for order counter
+    match /orderCounter/{year} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Rules for work assignments
+    match /workAssignments/{assignmentId} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}

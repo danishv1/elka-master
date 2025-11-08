@@ -1,0 +1,33 @@
+{
+  "name": "invoice-manager",
+  "version": "1.0.0",
+  "description": "Invoice Management System",
+  "main": "public/index.html",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "serve": "firebase emulators:start",
+    "deploy": "firebase deploy"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^2.0.7",
+    "jest": "^29.7.0",
+    "firebase-functions-test": "^3.1.0"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "setupFilesAfterEnv": ["<rootDir>/tests/setup-simple.js"],
+    "testMatch": [
+      "<rootDir>/tests/simple.test.js",
+      "<rootDir>/tests/unit/**/*.test.js",
+      "<rootDir>/tests/integration/simple-firebase.test.js",
+      "<rootDir>/tests/ui/simple-rendering.test.js"
+    ],
+    "collectCoverageFrom": [
+      "public/**/*.js",
+      "functions/**/*.js",
+      "!**/node_modules/**"
+    ]
+  }
+}

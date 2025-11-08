@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מערכת ניהול חשבוניות</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+    
+    <!-- Firebase Config - קובץ נפרד עם הפרטים שלך -->
+    <script src="firebase-config.js"></script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <div id="app">
+        <div class="flex items-center justify-center min-h-screen">
+            <div class="text-center">
+                <div class="text-2xl mb-4">⏳ טוען...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const storage = firebase.storage();
+
+        console.log('Firebase initialized:', firebase.app().name);
+
+        // Categories
+        const categories = [
+            'בטון ומוצריו',
+            'כבלים',
+            'כלים כבדים',
+            'נותני שירות',
+            'עמודים',
+            'פנסים',
+            'צינורות',
+            'קבלני משנה',
+            'שונות'
+        ];
+
+        // State
+        let state = {
+            projects: [],
+            selectedProject: null,
+            showNewProject: false,
+            showNewInvoice: false,
+            editingProject: null,
+            editingInvoice: null,
+            viewingAttachment: null,
+            newProject: { name: '', revenue: '' },
+            newInvoice: {
+                supplier: '',
+                date: new Date().toISOString().split('T')[0],
+                items: [{ description: '', amount: '', category: 'שונות' }],
+                attachments: []
+            }
+        };
+
+        // Load projects from Firestore
+        async function loadProjects() {
+            try {
+                console.log('Loading projects...');
+                const snapshot = await db.collection('projects').orderBy('createdAt', 'desc').get();
+                state.projects = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data(),
+                    invoices: []
+                }));
+                console.log('Loaded projects:', state.projects.length);
+                render();
+            } catch (error) {
+                console.error('Error loading projects:', error);
+                alert('שגיאה בטעינת הפרויקטים: ' + error.message);
+            }
+        }
+
+        // Add project
+        async function addProject() {
+            console.log('Adding project:', state.newProject);
+            if (!state.newProject.name) {
+                alert('יש להזין שם לפרויקט');
+                return;
+            }
+            
+            try {
+                const projectData = {
+                    name: state.newProject.name,
+                    revenue: parseFloat(state.newProject.revenue) || 0,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                
+                const docRef = await db.collection('projects').add(projectData);
+                console.log('Project added:', docRef.id);
+                
+                state.projects.unshift({
+                    id: docRef.id,
+                    ...projectData,
+                    createdAt: new Date(),
+                    invoices: []
+                });
+                
+                state.newProject = { name: '', revenue: '' };
+                state.showNewProject = false;
+                render();
+            } catch (error) {
+                console.error('Error adding project:', error);
+                alert('שגיאה בהוספת פרויקט: ' + error.message);
+            }
+        }
+
+        // Delete project
+        async function deleteProject(projectId) {
+            if (!confirm('האם אתה בטוח שברצונך למחוק את הפרויקט?')) return;
+            
+            try {
+                await db.collection('projects').doc(projectId).delete();
+                
+                const invoicesSnapshot = await db.collection('invoices')
+                    .where('projectId', '==', projectId).get();
+                const batch = db.batch();
+                invoicesSnapshot.docs.forEach(doc => batch.delete(doc.ref));
+                await batch.commit();
+                
+                state.projects = state.projects.filter(p => p.id !== projectId);
+                if (state.selectedProject?.id === projectId) {
+                    state.selectedProject = null;
+                }
+                render();
+            } catch (error) {
+                console.error('Error deleting project:', error);
+                alert('שגיאה במחיקת פרויקט: ' + error.message);
+            }
+        }
+
+        // Update project
+        async function saveEditProject() {
+            if (!state.editingProject.name) return;
+            
+            try {
+                const updates = {
+                    name: state.editingProject.name,
+                    revenue: parseFloat(state.editingProject.revenue) || 0
+                };
+                
+                await db.collection('projects').doc(state.editingProject.id).update(updates);
+                
+                state.projects = state.projects.map(p =>
+                    p.id === state.editingProject.id ? { ...p, ...updates } : p
+                );
+                
+                if (state.selectedProject?.id === state.editingProject.id) {
+                    state.selectedProject = { ...state.selectedProject, ...updates };
+                }
+                
+                state.editingProject = null;
+                render();
+            } catch (error) {
+                console.error('Error updating project:', error);
+                alert('שגיאה בעדכון פרויקט: ' + error.message);
+            }
+        }
+
+        function startEditProject(project) {
+            state.editingProject = { ...project };
+            render();
+        }
+
+        function cancelEditProject() {
+            state.editingProject = null;
+            render();
+        }
+
+        // Load invoices for a project
+        async function loadInvoices(projectId) {
+            try {
+                const snapshot = await db.collection('invoices')
+                    .where('projectId', '==', projectId)
+                    .orderBy('date', 'desc')
+                    .get();
+                
+                return snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+            } catch (error) {
+                console.error('Error loading invoices:', error);
+                return [];
+            }
+        }
+
+        // Add invoice with file upload
+        async function addInvoice() {
+            if (!state.newInvoice.supplier || !state.selectedProject) {
+                alert('יש להזין ספק');
+                return;
+            }
+            
+            const validItems = state.newInvoice.items.filter(item => item.amount && parseFloat(item.amount) > 0);
+            if (validItems.length === 0) {
+                alert('יש להוסיף לפחות פריט אחד עם סכום');
+                return;
+            }
+            
+            try {
+                // Upload files first
+                const uploadedFiles = [];
+                for (const file of state.newInvoice.attachments) {
+                    const storageRef = storage.ref(`invoices/${state.selectedProject.id}/${Date.now()}_${file.name}`);
+                    await storageRef.putString(file.data, 'data_url');
+                    const downloadURL = await storageRef.getDownloadURL();
+                    uploadedFiles.push({
+                        name: file.name,
+                        url: downloadURL,
+                        type: file.type
+                    });
+                }
+                
+                // Add invoices to Firestore
+                const batch = db.batch();
+                validItems.forEach(item => {
+                    const invoiceRef = db.collection('invoices').doc();
+                    batch.set(invoiceRef, {
+                        projectId: state.selectedProject.id,
+                        supplier: state.newInvoice.supplier,
+                        amount: parseFloat(item.amount),
+                        date: state.newInvoice.date,
+                        description: item.description,
+                        category: item.category,
+                        attachments: uploadedFiles,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                });
+                await batch.commit();
+                
+                // Reload invoices
+                const invoices = await loadInvoices(state.selectedProject.id);
+                state.selectedProject.invoices = invoices;
+                
+                state.newInvoice = {
+                    supplier: '',
+                    date: new Date().toISOString().split('T')[0],
+                    items: [{ description: '', amount: '', category: 'שונות' }],
+                    attachments: []
+                };
+                state.showNewInvoice = false;
+                render();
+            } catch (error) {
+                console.error('Error adding invoice:', error);
+                alert('שגיאה בהוספת חשבונית: ' + error.message);
+            }
+        }
+
+        // Delete invoice
+        async function deleteInvoice(invoiceId) {
+            if (!confirm('האם למחוק את החשבונית?')) return;
+            
+            try {
+                await db.collection('invoices').doc(invoiceId).delete();
+                const invoices = await loadInvoices(state.selectedProject.id);
+                state.selectedProject.invoices = invoices;
+                render();
+            } catch (error) {
+                console.error('Error deleting invoice:', error);
+                alert('שגיאה במחיקת חשבונית: ' + error.message);
+            }
+        }
+
+        // Select project
+        async function selectProject(projectId) {
+            const project = state.projects.find(p => p.id === projectId);
+            if (!project) return;
+            
+            state.selectedProject = { ...project };
+            const invoices = await loadInvoices(project.id);
+            state.selectedProject.invoices = invoices;
+            render();
+        }
+
+        // Calculate totals
+        function calculateTotals(project) {
+            const invoices = project.invoices || [];
+            const totalExpenses = invoices.reduce((sum, inv) => sum + inv.amount, 0);
+            const profit = project.revenue - totalExpenses;
+            const profitMargin = project.revenue > 0 ? (profit / project.revenue) * 100 : 0;
+            return { totalExpenses, profit, profitMargin };
+        }
+
+        // Handle file upload
+        function handleFileUpload(event) {
+            const files = Array.from(event.target.files);
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    state.newInvoice.attachments.push({
+                        id: Date.now() + Math.random(),
+                        name: file.name,
+                        type: file.type,
+                        data: e.target.result,
+                        size: file.size
+                    });
+                    render();
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function removeAttachment(attachmentId) {
+            state.newInvoice.attachments = state.newInvoice.attachments.filter(a => a.id !== attachmentId);
+            render();
+        }
+
+        function addInvoiceItem() {
+            state.newInvoice.items.push({ description: '', amount: '', category: 'שונות' });
+            render();
+        }
+
+        function removeInvoiceItem(index) {
+            if (state.newInvoice.items.length > 1) {
+                state.newInvoice.items.splice(index, 1);
+                render();
+            }
+        }
+
+        function updateInvoiceItem(index, field, value) {
+            state.newInvoice.items[index][field] = value;
+            render();
+        }
+
+        function toggleNewProject() {
+            state.showNewProject = !state.showNewProject;
+            render();
+        }
+
+        function toggleNewInvoice() {
+            state.showNewInvoice = !state.showNewInvoice;
+            render();
+        }
+
+        function viewAttachment(attachment) {
+            state.viewingAttachment = attachment;
+            render();
+        }
+
+        function closeAttachment() {
+            state.viewingAttachment = null;
+            render();
+        }
+
+        // Render function
+        function render() {
+            const app = document.getElementById('app');
+            
+            const html = `
+                <div class="max-w-7xl mx-auto p-6">
+                    <h1 class="text-4xl font-bold text-gray-800 mb-8 text-center">
+                        מערכת ניהול חשבוניות לפרויקטים
+                    </h1>
+
+                    <div class="grid md:grid-cols-3 gap-6">
+                        ${renderProjectsList()}
+                        ${renderInvoiceSection()}
+                    </div>
+                </div>
+
+                ${state.viewingAttachment ? renderAttachmentModal() : ''}
+            `;
+            
+            app.innerHTML = html;
+        }
+
+        function renderProjectsList() {
+            return `
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">פרויקטים</h2>
+                        <button onclick="toggleNewProject()" class="bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        </button>
+                    </div>
+
+                    ${state.showNewProject ? `
+                        <div class="mb-4 p-4 bg-blue-50 rounded-lg">
+                            <input type="text" placeholder="שם הפרויקט" value="${state.newProject.name}" 
+                                onchange="state.newProject.name = this.value" class="w-full p-2 mb-2 border rounded"/>
+                            <input type="number" placeholder="הכנסה מהלקוח (₪)" value="${state.newProject.revenue}" 
+                                onchange="state.newProject.revenue = this.value" class="w-full p-2 mb-2 border rounded"/>
+                            <button onclick="addProject()" class="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600">
+                                הוסף פרויקט
+                            </button>
+                        </div>
+                    ` : ''}
+
+                    <div class="space-y-2 max-h-[600px] overflow-y-auto">
+                        ${state.projects.map(project => renderProjectCard(project)).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderProjectCard(project) {
+            const { totalExpenses, profit, profitMargin } = calculateTotals(project);
+            const isEditing = state.editingProject?.id === project.id;
+            
+            if (isEditing) {
+                return `
+                    <div class="p-4 rounded-lg bg-blue-100 border-2 border-blue-500">
+                        <input type="text" value="${state.editingProject.name}" 
+                            onchange="state.editingProject.name = this.value" class="w-full p-2 mb-2 border rounded"/>
+                        <input type="number" placeholder="הכנסה" value="${state.editingProject.revenue}" 
+                            onchange="state.editingProject.revenue = this.value" class="w-full p-2 mb-2 border rounded"/>
+                        <div class="flex gap-2">
+                            <button onclick="saveEditProject()" class="flex-1 bg-green-500 text-white p-2 rounded">שמור</button>
+                            <button onclick="cancelEditProject()" class="flex-1 bg-gray-400 text-white p-2 rounded">ביטול</button>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            return `
+                <div class="p-4 rounded-lg cursor-pointer transition ${state.selectedProject?.id === project.id ? 'bg-blue-100 border-2 border-blue-500' : 'bg-gray-50 hover:bg-gray-100'}"
+                    onclick="selectProject('${project.id}')">
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="font-bold text-lg">${project.name}</h3>
+                        <div class="flex gap-2">
+                            <button onclick="event.stopPropagation(); startEditProject(${JSON.stringify(project).replace(/"/g, '&quot;')})" class="text-blue-500 hover:text-blue-700">✏️</button>
+                            <button onclick="event.stopPropagation(); deleteProject('${project.id}')" class="text-red-500 hover:text-red-700">🗑️</button>
+                        </div>
+                    </div>
+                    <div class="text-sm space-y-1">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">הוצאות:</span>
+                            <span class="font-semibold">₪${totalExpenses.toLocaleString()}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">הכנסות:</span>
+                            <span class="font-semibold">₪${project.revenue.toLocaleString()}</span>
+                        </div>
+                        <div class="flex justify-between pt-2 border-t ${profit >= 0 ? 'text-green-600' : 'text-red-600'}">
+                            <span class="font-bold">רווח:</span>
+                            <span class="font-bold">₪${profit.toLocaleString()} (${profitMargin.toFixed(1)}%)</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderInvoiceSection() {
+            if (!state.selectedProject) {
+                return `
+                    <div class="md:col-span-2 bg-white rounded-lg shadow-lg p-6">
+                        <div class="h-full flex items-center justify-center text-gray-400">
+                            <div class="text-center">
+                                <svg class="mx-auto mb-4 opacity-50" xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                                <p class="text-xl">בחר פרויקט מהרשימה או צור פרויקט חדש</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            const { totalExpenses, profit, profitMargin } = calculateTotals(state.selectedProject);
+            
+            return `
+                <div class="md:col-span-2 bg-white rounded-lg shadow-lg p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">${state.selectedProject.name}</h2>
+                        <button onclick="toggleNewInvoice()" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                            חשבונית חדשה
+                        </button>
+                    </div>
+
+                    ${state.showNewInvoice ? renderNewInvoiceForm() : ''}
+
+                    <div class="grid grid-cols-3 gap-4 mb-6">
+                        <div class="bg-red-50 p-4 rounded-lg">
+                            <div class="text-sm text-gray-600 mb-1">סך הוצאות</div>
+                            <div class="text-2xl font-bold text-red-600">₪${totalExpenses.toLocaleString()}</div>
+                        </div>
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <div class="text-sm text-gray-600 mb-1">הכנסות</div>
+                            <div class="text-2xl font-bold text-blue-600">₪${state.selectedProject.revenue.toLocaleString()}</div>
+                        </div>
+                        <div class="${profit >= 0 ? 'bg-green-50' : 'bg-red-50'} p-4 rounded-lg">
+                            <div class="text-sm text-gray-600 mb-1">רווח נקי</div>
+                            <div class="text-2xl font-bold ${profit >= 0 ? 'text-green-600' : 'text-red-600'}">
+                                ₪${profit.toLocaleString()}
+                            </div>
+                            <div class="text-sm mt-1">${profitMargin.toFixed(1)}% מהכנסות</div>
+                        </div>
+                    </div>
+
+                    ${renderInvoicesTable()}
+                </div>
+            `;
+        }
+
+        function renderNewInvoiceForm() {
+            const total = state.newInvoice.items.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
+            
+            return `
+                <div class="mb-6 p-4 bg-green-50 rounded-lg">
+                    <h3 class="font-bold mb-3">חשבונית חדשה</h3>
+                    
+                    <input type="text" placeholder="שם הספק" value="${state.newInvoice.supplier}" 
+                        onchange="state.newInvoice.supplier = this.value" class="w-full p-2 mb-2 border rounded"/>
+                    
+                    <input type="date" value="${state.newInvoice.date}" 
+                        onchange="state.newInvoice.date = this.value" class="w-full p-2 mb-3 border rounded"/>
+
+                    <div class="mb-3 p-3 bg-white rounded border">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-semibold">פריטים בחשבונית</span>
+                            <button onclick="addInvoiceItem()" class="text-green-600 text-sm hover:text-green-700">
+                                ➕ הוסף פריט
+                            </button>
+                        </div>
+                        
+                        ${state.newInvoice.items.map((item, index) => `
+                            <div class="mb-3 p-2 bg-gray-50 rounded">
+                                <div class="flex justify-between items-start mb-2">
+                                    <span class="text-sm font-semibold">פריט ${index + 1}</span>
+                                    ${state.newInvoice.items.length > 1 ? 
+                                        `<button onclick="removeInvoiceItem(${index})" class="text-red-500 text-sm hover:text-red-700">🗑️</button>` : 
+                                        ''}
+                                </div>
+                                
+                                <select onchange="updateInvoiceItem(${index}, 'category', this.value)" 
+                                    class="w-full p-2 mb-2 border rounded text-sm">
+                                    ${categories.map(cat => `<option value="${cat}" ${item.category === cat ? 'selected' : ''}>${cat}</option>`).join('')}
+                                </select>
+                                
+                                <input type="text" placeholder="תיאור" value="${item.description}" 
+                                    onchange="updateInvoiceItem(${index}, 'description', this.value)" 
+                                    class="w-full p-2 mb-2 border rounded text-sm"/>
+                                
+                                <input type="number" placeholder="סכום (₪)" value="${item.amount}" 
+                                    onchange="updateInvoiceItem(${index}, 'amount', this.value)" 
+                                    class="w-full p-2 border rounded text-sm"/>
+                            </div>
+                        `).join('')}
+                        
+                        <div class="pt-2 border-t mt-2 flex justify-between items-center font-bold">
+                            <span>סה"כ:</span>
+                            <span>₪${total.toLocaleString()}</span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="block text-sm font-semibold mb-2">קבצים מצורפים</label>
+                        <input type="file" multiple accept="image/*,.pdf" onchange="handleFileUpload(event)" 
+                            class="w-full p-2 border rounded text-sm"/>
+                        ${state.newInvoice.attachments.length > 0 ? `
+                            <div class="mt-2 space-y-1">
+                                ${state.newInvoice.attachments.map(file => `
+                                    <div class="flex items-center justify-between bg-white p-2 rounded border text-sm">
+                                        <span>📎 ${file.name} (${(file.size / 1024).toFixed(0)}KB)</span>
+                                        <button onclick="removeAttachment(${file.id})" class="text-red-500 hover:text-red-700">🗑️</button>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
+                    
+                    <button onclick="addInvoice()" class="w-full bg-green-500 text-white p-2 rounded hover:bg-green-600">
+                        הוסף חשבונית
+                    </button>
+                </div>
+            `;
+        }
+
+        function renderInvoicesTable() {
+            const invoices = state.selectedProject.invoices || [];
+            
+            return `
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="p-3 text-right">תאריך</th>
+                                <th class="p-3 text-right">ספק</th>
+                                <th class="p-3 text-right">קטגוריה</th>
+                                <th class="p-3 text-right">תיאור</th>
+                                <th class="p-3 text-right">סכום</th>
+                                <th class="p-3 text-right">קבצים</th>
+                                <th class="p-3 text-right">פעולות</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${invoices.length === 0 ? `
+                                <tr><td colspan="7" class="p-8 text-center text-gray-400">עדיין לא הוספת חשבוניות לפרויקט זה</td></tr>
+                            ` : invoices.map(invoice => `
+                                <tr class="border-b hover:bg-gray-50">
+                                    <td class="p-3">${new Date(invoice.date).toLocaleDateString('he-IL')}</td>
+                                    <td class="p-3 font-semibold">${invoice.supplier}</td>
+                                    <td class="p-3">
+                                        <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm">${invoice.category || 'שונות'}</span>
+                                    </td>
+                                    <td class="p-3 text-gray-600">${invoice.description || '-'}</td>
+                                    <td class="p-3 font-bold">₪${invoice.amount.toLocaleString()}</td>
+                                    <td class="p-3">
+                                        ${invoice.attachments && invoice.attachments.length > 0 ? 
+                                            `<button onclick='viewAttachment(${JSON.stringify(invoice.attachments[0]).replace(/'/g, "\\'")})'  class="text-blue-600 hover:text-blue-700">👁️ ${invoice.attachments.length}</button>` : 
+                                            '<span class="text-gray-400">-</span>'
+                                        }
+                                    </td>
+                                    <td class="p-3">
+                                        <button onclick="deleteInvoice('${invoice.id}')" class="text-red-500 hover:text-red-700">🗑️</button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function renderAttachmentModal() {
+            return `
+                <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onclick="closeAttachment()">
+                    <div class="bg-white rounded-lg max-w-4xl max-h-[90vh] overflow-auto p-6" onclick="event.stopPropagation()">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-lg">${state.viewingAttachment.name}</h3>
+                            <button onclick="closeAttachment()" class="text-gray-500 hover:text-gray-700 text-2xl">✕</button>
+                        </div>
+                        ${state.viewingAttachment.type.startsWith('image/') ? 
+                            `<img src="${state.viewingAttachment.url}" alt="${state.viewingAttachment.name}" class="max-w-full h-auto"/>` :
+                            `<iframe src="${state.viewingAttachment.url}" class="w-full h-[70vh]"></iframe>`
+                        }
+                    </div>
+                </div>
+            `;
+        }
+
+        // Initialize app
+        console.log('Initializing app...');
+        loadProjects();
+    </script>
+</body>
+</html>
