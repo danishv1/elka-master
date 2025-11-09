@@ -148,6 +148,7 @@
             showCropModal: false,
             pendingOCRFile: null,
             pdfTemplate: null, // URL to uploaded PDF template
+            pdfTopMargin: 180, // Configurable top margin for PDF template (in points)
             loadingSuppliers: false,
             loadingOrders: false,
             suppliersLoaded: false,
@@ -1310,9 +1311,9 @@
                 console.log('Using cached Hebrew font');
                 return hebrewFontBytes;
             }
-            
+
             try {
-                console.log('Fetching Hebrew font (Rubik)...');
+                console.log('Fetching Hebrew font (Rubik Regular)...');
                 // Rubik Regular with Hebrew support from Google Fonts
                 const fontUrl = 'https://fonts.gstatic.com/s/rubik/v28/iJWZBXyIfDnIV5PNhY1KTN7Z-Yh-B4iFWUU.ttf';
                 const response = await fetch(fontUrl);
@@ -1320,10 +1321,36 @@
                     throw new Error('Failed to fetch Hebrew font');
                 }
                 hebrewFontBytes = await response.arrayBuffer();
-                console.log('Hebrew font loaded successfully');
+                console.log('Hebrew font (Regular) loaded successfully');
                 return hebrewFontBytes;
             } catch (error) {
                 console.error('Error loading Hebrew font:', error);
+                throw error;
+            }
+        }
+
+        // Global cache for Hebrew Bold font
+        let hebrewBoldFontBytes = null;
+
+        async function loadHebrewBoldFont() {
+            if (hebrewBoldFontBytes) {
+                console.log('Using cached Hebrew Bold font');
+                return hebrewBoldFontBytes;
+            }
+
+            try {
+                console.log('Fetching Hebrew Bold font (Rubik Bold)...');
+                // Rubik Bold with Hebrew support from Google Fonts
+                const fontUrl = 'https://fonts.gstatic.com/s/rubik/v28/iJWZBXyIfDnIV5PNhY1KTN7Z-Yh-NYiFWUUxJI0.ttf';
+                const response = await fetch(fontUrl);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch Hebrew Bold font');
+                }
+                hebrewBoldFontBytes = await response.arrayBuffer();
+                console.log('Hebrew font (Bold) loaded successfully');
+                return hebrewBoldFontBytes;
+            } catch (error) {
+                console.error('Error loading Hebrew Bold font:', error);
                 throw error;
             }
         }
@@ -1335,11 +1362,11 @@
                     alert('הזמנה לא נמצאה');
                     return;
                 }
-                
+
                 // Fetch the PDF template
                 let pdfDoc;
                 let useTemplate = false;
-                
+
                 if (state.pdfTemplate) {
                     try {
                         console.log('Loading PDF template from:', state.pdfTemplate);
@@ -1363,7 +1390,7 @@
                     if (!proceed) return;
                     pdfDoc = await PDFLib.PDFDocument.create();
                 }
-                
+
                 // Get the first page or create one
                 let page;
                 if (pdfDoc.getPageCount() > 0) {
@@ -1371,39 +1398,123 @@
                 } else {
                     page = pdfDoc.addPage([595, 842]); // A4 size
                 }
-                
+
                 const { width, height } = page.getSize();
                 console.log('PDF dimensions:', width, 'x', height);
-                
-                // Load and embed Hebrew font
-                const fontBytes = await loadHebrewFont();
-                const font = await pdfDoc.embedFont(fontBytes);
-                const boldFont = await pdfDoc.embedFont(fontBytes); // Same font for now, can make bold later
-                
-                // Helper function to reverse Hebrew text for RTL display
+
+                // Load and embed Hebrew fonts with fallback
+                let font, boldFont;
+                try {
+                    const fontBytes = await loadHebrewFont();
+                    const boldFontBytes = await loadHebrewBoldFont();
+                    font = await pdfDoc.embedFont(fontBytes);
+                    boldFont = await pdfDoc.embedFont(boldFontBytes);
+                    console.log('✅ Hebrew fonts embedded successfully');
+                } catch (error) {
+                    console.error('❌ Failed to load Hebrew fonts, using Helvetica fallback:', error);
+                    // Fallback to Helvetica (built-in font that works but doesn't support Hebrew well)
+                    font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
+                    boldFont = await pdfDoc.embedFont(PDFLib.StandardFonts.HelveticaBold);
+                    alert('שגיאה בטעינת פונט עברי. משתמש בפונט ברירת מחדל.');
+                }
+
+                // Helper function to reverse Hebrew text for RTL display while preserving numbers and punctuation
                 const reverseHebrewText = (text) => {
                     if (!text) return '';
-                    // Reverse the string for RTL display in PDF
-                    return text.split('').reverse().join('');
+
+                    // Split text into segments: Hebrew text, numbers, and punctuation
+                    const segments = [];
+                    let currentSegment = '';
+                    let currentType = null; // 'hebrew', 'number', 'other'
+
+                    for (let i = 0; i < text.length; i++) {
+                        const char = text[i];
+                        const charCode = char.charCodeAt(0);
+
+                        // Detect character type
+                        let charType;
+                        if ((charCode >= 0x0590 && charCode <= 0x05FF) || // Hebrew block
+                            (charCode >= 0xFB1D && charCode <= 0xFB4F)) {  // Hebrew presentation forms
+                            charType = 'hebrew';
+                        } else if (char >= '0' && char <= '9') {
+                            charType = 'number';
+                        } else {
+                            charType = 'other';
+                        }
+
+                        // If type changes, save current segment and start new one
+                        if (currentType !== null && currentType !== charType) {
+                            segments.push({ text: currentSegment, type: currentType });
+                            currentSegment = char;
+                            currentType = charType;
+                        } else {
+                            currentSegment += char;
+                            currentType = charType;
+                        }
+                    }
+
+                    // Save last segment
+                    if (currentSegment) {
+                        segments.push({ text: currentSegment, type: currentType });
+                    }
+
+                    // Reverse the order of segments (RTL)
+                    segments.reverse();
+
+                    // Reverse Hebrew text within segments, but keep numbers and other chars normal
+                    const result = segments.map(seg => {
+                        if (seg.type === 'hebrew') {
+                            return seg.text.split('').reverse().join('');
+                        }
+                        return seg.text;
+                    }).join('');
+
+                    return result;
                 };
-                
-                // Helper to clean text but keep Hebrew
-                const cleanText = (text) => {
-                    if (!text) return '';
-                    return text.trim();
+
+                // Helper to format numbers with thousand separators
+                const formatNumber = (num) => {
+                    if (typeof num !== 'number' || isNaN(num)) return '0.00';
+                    return num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
                 };
-                
+
+                // Helper to wrap text to fit within a given width
+                const wrapText = (text, maxWidth, font, fontSize) => {
+                    if (!text) return [];
+
+                    const words = text.split(' ');
+                    const lines = [];
+                    let currentLine = '';
+
+                    for (const word of words) {
+                        const testLine = currentLine ? `${currentLine} ${word}` : word;
+                        const testWidth = font.widthOfTextAtSize(testLine, fontSize);
+
+                        if (testWidth > maxWidth && currentLine) {
+                            lines.push(currentLine);
+                            currentLine = word;
+                        } else {
+                            currentLine = testLine;
+                        }
+                    }
+
+                    if (currentLine) {
+                        lines.push(currentLine);
+                    }
+
+                    return lines;
+                };
+
                 // Get supplier contact info
                 const supplier = state.suppliers.find(s => s.id === order.supplierId);
-                
-                // Add order details - Start position adjusted for template with logo/header
-                // Assuming template has header in top ~200 points
-                let yPosition = height - 180;  // Start below header area
+
+                // Add order details - Start position adjusted by configurable top margin
+                let yPosition = height - state.pdfTopMargin;  // Use configurable top margin
                 const fontSize = 11;
                 const lineHeight = 18;
                 const leftMargin = 40;
                 const rightColumn = 320;
-                
+
                 // Order number (bold, larger) - Right side
                 page.drawText(reverseHebrewText(`הזמנה מס': ${order.orderNumber}`), {
                     x: rightColumn,
@@ -1413,7 +1524,7 @@
                     color: PDFLib.rgb(0, 0, 0)
                 });
                 yPosition -= lineHeight * 1.5;
-                
+
                 // Order date - Right side
                 page.drawText(reverseHebrewText(`תאריך: ${order.orderDate || new Date().toLocaleDateString('he-IL')}`), {
                     x: rightColumn,
@@ -1423,7 +1534,7 @@
                     color: PDFLib.rgb(0, 0, 0)
                 });
                 yPosition -= lineHeight;
-                
+
                 // Project name - Right side
                 const projectDisplay = order.projectName || `פרויקט #${order.projectId.substring(0, 8)}`;
                 page.drawText(reverseHebrewText(`שם פרויקט: ${projectDisplay}`), {
@@ -1434,7 +1545,7 @@
                     color: PDFLib.rgb(0, 0, 0)
                 });
                 yPosition -= lineHeight;
-                
+
                 // Supplier name - Right side
                 const supplierDisplay = order.supplierName || `ספק #${order.supplierId.substring(0, 8)}`;
                 page.drawText(reverseHebrewText(`שם ספק: ${supplierDisplay}`), {
@@ -1445,8 +1556,8 @@
                     color: PDFLib.rgb(0, 0, 0)
                 });
                 yPosition -= lineHeight;
-                
-                // Supplier contact info - Right side
+
+                // Supplier contact info - Right side (only if exists)
                 if (supplier && supplier.contactName) {
                     page.drawText(reverseHebrewText(`איש קשר: ${supplier.contactName}`), {
                         x: rightColumn,
@@ -1457,9 +1568,9 @@
                     });
                     yPosition -= lineHeight;
                 }
-                
+
                 yPosition -= lineHeight;
-                
+
                 // Items table header - RTL order
                 const colDesc = leftMargin;
                 const colQty = 220;
@@ -1467,7 +1578,7 @@
                 const colPrice = 340;
                 const colSum = 420;
                 const rightMargin = width - 40;
-                
+
                 page.drawText(reverseHebrewText('תיאור'), {
                     x: colDesc,
                     y: yPosition,
@@ -1504,7 +1615,7 @@
                     color: PDFLib.rgb(0, 0, 0)
                 });
                 yPosition -= lineHeight * 0.5;
-                
+
                 // Draw line under header
                 page.drawLine({
                     start: { x: leftMargin, y: yPosition },
@@ -1513,34 +1624,40 @@
                     color: PDFLib.rgb(0, 0, 0)
                 });
                 yPosition -= lineHeight * 0.8;
-                
+
                 // Items
                 for (const item of order.items) {
+                    // Check if we need a new page
                     if (yPosition < 120) {
-                        // Add new page if needed
                         page = pdfDoc.addPage([595, 842]);
                         yPosition = height - 50;
                     }
-                    
-                    // Description - reverse if Hebrew
+
+                    // Description with text wrapping - max width ~170 points for description column
                     const descText = item.description || `פריט ${order.items.indexOf(item) + 1}`;
-                    page.drawText(reverseHebrewText(descText.substring(0, 30)), {
-                        x: colDesc,
-                        y: yPosition,
-                        size: fontSize,
-                        font: font,
-                        color: PDFLib.rgb(0, 0, 0)
-                    });
-                    
-                    // Quantity
-                    page.drawText(String(item.quantity || 1), {
+                    const descLines = wrapText(descText, 170, font, fontSize);
+
+                    // Draw first line of description
+                    if (descLines.length > 0) {
+                        page.drawText(reverseHebrewText(descLines[0]), {
+                            x: colDesc,
+                            y: yPosition,
+                            size: fontSize,
+                            font: font,
+                            color: PDFLib.rgb(0, 0, 0)
+                        });
+                    }
+
+                    // Quantity - with validation
+                    const qtyValue = typeof item.quantity === 'number' ? item.quantity : (parseFloat(item.quantity) || 1);
+                    page.drawText(String(qtyValue), {
                         x: colQty,
                         y: yPosition,
                         size: fontSize,
                         font: font,
                         color: PDFLib.rgb(0, 0, 0)
                     });
-                    
+
                     // Unit - keep Hebrew units
                     const unitDisplay = reverseHebrewText(item.unit || 'יח\'');
                     page.drawText(unitDisplay, {
@@ -1550,29 +1667,49 @@
                         font: font,
                         color: PDFLib.rgb(0, 0, 0)
                     });
-                    
-                    // Price
-                    page.drawText(item.price.toFixed(2), {
+
+                    // Price - with validation and formatting
+                    const priceValue = typeof item.price === 'number' ? item.price : (parseFloat(item.price) || 0);
+                    page.drawText(formatNumber(priceValue), {
                         x: colPrice,
                         y: yPosition,
                         size: fontSize,
                         font: font,
                         color: PDFLib.rgb(0, 0, 0)
                     });
-                    
-                    // Sum
-                    page.drawText(item.sum.toFixed(2), {
+
+                    // Sum - with validation and formatting
+                    const sumValue = typeof item.sum === 'number' ? item.sum : (parseFloat(item.sum) || 0);
+                    page.drawText(formatNumber(sumValue), {
                         x: colSum,
                         y: yPosition,
                         size: fontSize,
                         font: font,
                         color: PDFLib.rgb(0, 0, 0)
                     });
+
                     yPosition -= lineHeight;
+
+                    // Draw additional description lines if they exist
+                    for (let i = 1; i < descLines.length; i++) {
+                        if (yPosition < 120) {
+                            page = pdfDoc.addPage([595, 842]);
+                            yPosition = height - 50;
+                        }
+
+                        page.drawText(reverseHebrewText(descLines[i]), {
+                            x: colDesc,
+                            y: yPosition,
+                            size: fontSize,
+                            font: font,
+                            color: PDFLib.rgb(0, 0, 0)
+                        });
+                        yPosition -= lineHeight;
+                    }
                 }
-                
+
                 yPosition -= lineHeight * 0.5;
-                
+
                 // Draw line before total
                 page.drawLine({
                     start: { x: colPrice - 10, y: yPosition },
@@ -1581,9 +1718,11 @@
                     color: PDFLib.rgb(0, 0, 0)
                 });
                 yPosition -= lineHeight * 0.8;
-                
-                // Total
-                page.drawText(reverseHebrewText(`סה"כ: ₪${order.totalSum.toFixed(2)}`), {
+
+                // Total - with proper number formatting and currency symbol
+                const totalValue = typeof order.totalSum === 'number' ? order.totalSum : (parseFloat(order.totalSum) || 0);
+                const totalText = `${formatNumber(totalValue)} ₪`;
+                page.drawText(reverseHebrewText(`סה"כ: ${totalText}`), {
                     x: colPrice,
                     y: yPosition,
                     size: 12,
@@ -1591,54 +1730,79 @@
                     color: PDFLib.rgb(0, 0, 0)
                 });
                 yPosition -= lineHeight * 2;
-                
-                // Additional info at the bottom - Right aligned
+
+                // Additional info at the bottom - Right aligned (only if exists)
                 if (order.orderedBy) {
-                    page.drawText(reverseHebrewText(`שם המזמין: ${order.orderedBy}`), {
-                        x: rightColumn,
-                        y: yPosition,
-                        size: fontSize - 1,
-                        font: font,
-                        color: PDFLib.rgb(0, 0, 0)
-                    });
-                    yPosition -= lineHeight;
+                    // Wrap ordered by text
+                    const orderedByLines = wrapText(`שם המזמין: ${order.orderedBy}`, 230, font, fontSize - 1);
+                    for (const line of orderedByLines) {
+                        if (yPosition < 80) {
+                            page = pdfDoc.addPage([595, 842]);
+                            yPosition = height - 50;
+                        }
+                        page.drawText(reverseHebrewText(line), {
+                            x: rightColumn,
+                            y: yPosition,
+                            size: fontSize - 1,
+                            font: font,
+                            color: PDFLib.rgb(0, 0, 0)
+                        });
+                        yPosition -= lineHeight;
+                    }
                 }
-                
+
                 if (order.deliveryAddress) {
-                    page.drawText(reverseHebrewText(`כתובת משלוח: ${order.deliveryAddress.substring(0, 40)}`), {
-                        x: rightColumn,
-                        y: yPosition,
-                        size: fontSize - 1,
-                        font: font,
-                        color: PDFLib.rgb(0, 0, 0)
-                    });
-                    yPosition -= lineHeight;
+                    // Wrap delivery address text
+                    const addressLines = wrapText(`כתובת משלוח: ${order.deliveryAddress}`, 230, font, fontSize - 1);
+                    for (const line of addressLines) {
+                        if (yPosition < 80) {
+                            page = pdfDoc.addPage([595, 842]);
+                            yPosition = height - 50;
+                        }
+                        page.drawText(reverseHebrewText(line), {
+                            x: rightColumn,
+                            y: yPosition,
+                            size: fontSize - 1,
+                            font: font,
+                            color: PDFLib.rgb(0, 0, 0)
+                        });
+                        yPosition -= lineHeight;
+                    }
                 }
-                
+
                 if (order.comments) {
-                    page.drawText(reverseHebrewText(`הערות: ${order.comments.substring(0, 40)}`), {
-                        x: rightColumn,
-                        y: yPosition,
-                        size: fontSize - 1,
-                        font: font,
-                        color: PDFLib.rgb(0, 0, 0)
-                    });
-                    yPosition -= lineHeight;
+                    // Wrap comments text
+                    const commentLines = wrapText(`הערות: ${order.comments}`, 230, font, fontSize - 1);
+                    for (const line of commentLines) {
+                        if (yPosition < 80) {
+                            page = pdfDoc.addPage([595, 842]);
+                            yPosition = height - 50;
+                        }
+                        page.drawText(reverseHebrewText(line), {
+                            x: rightColumn,
+                            y: yPosition,
+                            size: fontSize - 1,
+                            font: font,
+                            color: PDFLib.rgb(0, 0, 0)
+                        });
+                        yPosition -= lineHeight;
+                    }
                 }
-                
+
                 // Save and download
                 const pdfBytes = await pdfDoc.save();
                 const blob = new Blob([pdfBytes], { type: 'application/pdf' });
                 const url = URL.createObjectURL(blob);
-                
+
                 const link = document.createElement('a');
                 link.href = url;
-                link.download = `Order_${order.orderNumber.replace('/', '-')}_${order.projectName}.pdf`;
+                link.download = `Order_${order.orderNumber.replace('/', '-')}_${order.projectName || 'Unknown'}.pdf`;
                 link.click();
-                
+
                 URL.revokeObjectURL(url);
+                console.log('✅ PDF generated and downloaded successfully');
             } catch (error) {
-                console.error('Error generating PDF:', error);
+                console.error('❌ Error generating PDF:', error);
                 alert('שגיאה ביצירת PDF: ' + error.message);
             }
         }
@@ -4267,13 +4431,36 @@
                                         <input type="file" accept="application/pdf" class="hidden" onchange="uploadPDFTemplate(this.files[0])"/>
                                     </label>
                                 ` : '<span class="text-sm text-green-600">✓ תבנית PDF הועלתה</span>'}
-                                <button onclick="state.showNewOrder = !state.showNewOrder; render()" 
+                                <button onclick="state.showNewOrder = !state.showNewOrder; render()"
                                     class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 flex items-center gap-2">
                                     <span class="text-xl">+</span>
                                     הזמנה חדשה
                                 </button>
                             </div>
                         </div>
+
+                        <!-- PDF Settings -->
+                        ${state.pdfTemplate ? `
+                            <div class="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                <div class="flex items-center gap-4">
+                                    <label class="text-sm font-medium text-gray-700">
+                                        שולי עליון ב-PDF (נקודות):
+                                    </label>
+                                    <input
+                                        type="number"
+                                        value="${state.pdfTopMargin}"
+                                        onchange="state.pdfTopMargin = parseInt(this.value) || 180; render()"
+                                        class="w-24 p-2 border rounded text-sm"
+                                        min="50"
+                                        max="400"
+                                        step="10"
+                                    />
+                                    <span class="text-xs text-gray-500">
+                                        (מומלץ: 180-200 עבור תבנית עם לוגו)
+                                    </span>
+                                </div>
+                            </div>
+                        ` : ''}
 
                         <!-- Orders View Tabs -->
                         <div class="mb-4">
