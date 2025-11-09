@@ -1387,8 +1387,43 @@
                 }
 
                 throw new Error('All font sources failed: ' + lastError.message);
+                // Rubik Regular with Hebrew support from Google Fonts
+                const fontUrl = 'https://fonts.gstatic.com/s/rubik/v28/iJWZBXyIfDnIV5PNhY1KTN7Z-Yh-B4iFWUU.ttf';
+                const response = await fetch(fontUrl);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch Hebrew font');
+                }
+                hebrewFontBytes = await response.arrayBuffer();
+                console.log('Hebrew font (Regular) loaded successfully');
+                return hebrewFontBytes;
             } catch (error) {
                 console.error('❌ Error loading Hebrew Bold font:', error);
+                throw error;
+            }
+        }
+
+        // Global cache for Hebrew Bold font
+        let hebrewBoldFontBytes = null;
+
+        async function loadHebrewBoldFont() {
+            if (hebrewBoldFontBytes) {
+                console.log('Using cached Hebrew Bold font');
+                return hebrewBoldFontBytes;
+            }
+
+            try {
+                console.log('Fetching Hebrew Bold font (Rubik Bold)...');
+                // Rubik Bold with Hebrew support from Google Fonts
+                const fontUrl = 'https://fonts.gstatic.com/s/rubik/v28/iJWZBXyIfDnIV5PNhY1KTN7Z-Yh-NYiFWUUxJI0.ttf';
+                const response = await fetch(fontUrl);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch Hebrew Bold font');
+                }
+                hebrewBoldFontBytes = await response.arrayBuffer();
+                console.log('Hebrew font (Bold) loaded successfully');
+                return hebrewBoldFontBytes;
+            } catch (error) {
+                console.error('Error loading Hebrew Bold font:', error);
                 throw error;
             }
         }
