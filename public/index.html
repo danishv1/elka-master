@@ -2917,7 +2917,35 @@
         }
 
         // ===== RENDER =====
-        
+
+        // Global Navigation Tabs Manager
+        function renderNavigationTabs(activeTab) {
+            const tabs = [
+                { id: 'clients', label: 'לקוחות', onclick: "state.view = 'clients'; updateHistory(); render()" },
+                { id: 'all-projects', label: 'כל הפרויקטים', onclick: "state.view = 'all-projects'; updateHistory(); render()" },
+                { id: 'suppliers', label: 'ספקים', onclick: "showSuppliersView()" },
+                { id: 'orders', label: 'הזמנות', onclick: "showOrdersView()" },
+                { id: 'work-schedule', label: 'סידור עבודה', onclick: "showWorkScheduleView()" }
+            ];
+
+            return `
+                <div class="mb-6">
+                    <div class="flex border-b border-gray-200">
+                        ${tabs.map(tab => `
+                            <button onclick="${tab.onclick}"
+                                class="px-6 py-3 text-sm font-medium border-b-2 ${
+                                    activeTab === tab.id
+                                        ? 'border-blue-500 text-blue-600 bg-blue-50'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                }">
+                                ${tab.label}
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
         function render() {
             const app = document.getElementById('app');
             
@@ -3073,32 +3101,9 @@
                             </button>
                         </div>
                     </div>
-                    
+
                     <!-- Navigation Tabs -->
-                    <div class="mb-6">
-                        <div class="flex border-b border-gray-200">
-                            <button onclick="state.view = 'clients'; updateHistory(); render()"
-                                class="px-6 py-3 text-sm font-medium border-b-2 border-blue-500 text-blue-600 bg-blue-50">
-                                לקוחות
-                            </button>
-                            <button onclick="state.view = 'all-projects'; updateHistory(); render()"
-                                class="px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
-                                כל הפרויקטים
-                            </button>
-                            <button onclick="showSuppliersView()"
-                                class="px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
-                                ספקים
-                            </button>
-                            <button onclick="showOrdersView()"
-                                class="px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
-                                הזמנות
-                            </button>
-                            <button onclick="showWorkScheduleView()"
-                                class="px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
-                                סידור עבודה
-                            </button>
-                        </div>
-                    </div>
+                    ${renderNavigationTabs('clients')}
 
                     <div class="bg-white rounded-lg shadow-lg p-6 max-w-4xl mx-auto">
                         <div class="flex justify-between items-center mb-6">
@@ -3198,32 +3203,9 @@
                             ${state.selectedClient.name}
                         </h1>
                     </div>
-                    
+
                     <!-- Navigation Tabs -->
-                    <div class="mb-6">
-                        <div class="flex border-b border-gray-200">
-                            <button onclick="state.view = 'clients'; updateHistory(); render()"
-                                class="px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
-                                לקוחות
-                            </button>
-                            <button onclick="state.view = 'all-projects'; updateHistory(); render()"
-                                class="px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
-                                כל הפרויקטים
-                            </button>
-                            <button onclick="showSuppliersView()"
-                                class="px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
-                                ספקים
-                            </button>
-                            <button onclick="showOrdersView()"
-                                class="px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
-                                הזמנות
-                            </button>
-                            <button onclick="showWorkScheduleView()"
-                                class="px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
-                                סידור עבודה
-                            </button>
-                        </div>
-                    </div>
+                    ${renderNavigationTabs(null)}
 
                     <div class="bg-white rounded-lg shadow-lg p-6">
                         <div class="flex justify-between items-center mb-6">
@@ -3420,30 +3402,7 @@
                     </div>
 
                     <!-- Navigation Tabs -->
-                    <div class="mb-6">
-                        <div class="flex border-b border-gray-200">
-                            <button onclick="state.view = 'clients'; updateHistory(); render()"
-                                class="px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
-                                לקוחות
-                            </button>
-                            <button onclick="state.view = 'all-projects'; updateHistory(); render()"
-                                class="px-6 py-3 text-sm font-medium border-b-2 border-blue-500 text-blue-600 bg-blue-50">
-                                כל הפרויקטים
-                            </button>
-                            <button onclick="showSuppliersView()"
-                                class="px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
-                                ספקים
-                            </button>
-                            <button onclick="showOrdersView()"
-                                class="px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
-                                הזמנות
-                            </button>
-                            <button onclick="showWorkScheduleView()"
-                                class="px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
-                                סידור עבודה
-                            </button>
-                        </div>
-                    </div>
+                    ${renderNavigationTabs('all-projects')}
 
                     <!-- Summary Cards -->
                     <div class="grid grid-cols-4 gap-4 mb-6">
@@ -3631,32 +3590,9 @@
                             </button>
                         </div>
                     </div>
-                    
+
                     <!-- Navigation Tabs -->
-                    <div class="mb-6">
-                        <div class="flex border-b border-gray-200">
-                            <button onclick="state.view = 'clients'; updateHistory(); render()"
-                                class="px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
-                                לקוחות
-                            </button>
-                            <button onclick="state.view = 'all-projects'; updateHistory(); render()"
-                                class="px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
-                                כל הפרויקטים
-                            </button>
-                            <button onclick="showSuppliersView()"
-                                class="px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
-                                ספקים
-                            </button>
-                            <button onclick="showOrdersView()"
-                                class="px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
-                                הזמנות
-                            </button>
-                            <button onclick="showWorkScheduleView()"
-                                class="px-6 py-3 text-sm font-medium border-b-2 border-blue-500 text-blue-600 bg-blue-50">
-                                סידור עבודה
-                            </button>
-                        </div>
-                    </div>
+                    ${renderNavigationTabs('work-schedule')}
 
                     <div class="bg-white rounded-lg shadow-lg p-6">
                         <!-- Calendar Controls -->
@@ -4172,32 +4108,9 @@
                             </button>
                         </div>
                     </div>
-                    
+
                     <!-- Navigation Tabs -->
-                    <div class="mb-6">
-                        <div class="flex border-b border-gray-200">
-                            <button onclick="state.view = 'clients'; updateHistory(); render()"
-                                class="px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
-                                לקוחות
-                            </button>
-                            <button onclick="state.view = 'all-projects'; updateHistory(); render()"
-                                class="px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
-                                כל הפרויקטים
-                            </button>
-                            <button onclick="showSuppliersView()"
-                                class="px-6 py-3 text-sm font-medium border-b-2 border-blue-500 text-blue-600 bg-blue-50">
-                                ספקים
-                            </button>
-                            <button onclick="showOrdersView()"
-                                class="px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
-                                הזמנות
-                            </button>
-                            <button onclick="showWorkScheduleView()"
-                                class="px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
-                                סידור עבודה
-                            </button>
-                        </div>
-                    </div>
+                    ${renderNavigationTabs('suppliers')}
 
                     <div class="bg-white rounded-lg shadow-lg p-6">
                         <div class="flex justify-between items-center mb-6">
@@ -4340,32 +4253,9 @@
                             </button>
                         </div>
                     </div>
-                    
+
                     <!-- Navigation Tabs -->
-                    <div class="mb-6">
-                        <div class="flex border-b border-gray-200">
-                            <button onclick="state.view = 'clients'; updateHistory(); render()"
-                                class="px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
-                                לקוחות
-                            </button>
-                            <button onclick="state.view = 'all-projects'; updateHistory(); render()"
-                                class="px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
-                                כל הפרויקטים
-                            </button>
-                            <button onclick="showSuppliersView()"
-                                class="px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
-                                ספקים
-                            </button>
-                            <button onclick="showOrdersView()"
-                                class="px-6 py-3 text-sm font-medium border-b-2 border-blue-500 text-blue-600 bg-blue-50">
-                                הזמנות
-                            </button>
-                            <button onclick="showWorkScheduleView()"
-                                class="px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
-                                סידור עבודה
-                            </button>
-                        </div>
-                    </div>
+                    ${renderNavigationTabs('orders')}
 
                     <div class="bg-white rounded-lg shadow-lg p-6">
                         <div class="flex justify-between items-center mb-6">
