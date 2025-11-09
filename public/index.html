@@ -3235,6 +3235,15 @@
             if (state.ocrResults) {
                 app.innerHTML += renderOCRApprovalModal();
             }
+
+            // Add version footer to all views (except login/loading)
+            if (state.user && !state.loading) {
+                app.innerHTML += `
+                    <div class="fixed bottom-0 left-0 right-0 bg-gray-800 bg-opacity-50 text-white text-center py-2 text-xs">
+                        v0.1.0
+                    </div>
+                `;
+            }
         }
 
         function renderLoginView() {
