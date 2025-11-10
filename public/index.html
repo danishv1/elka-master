@@ -247,6 +247,7 @@
             draggedWorker: null, // Currently dragged worker
             loadingAssignments: false,
             assignmentsLoaded: false,
+            sidurStatusFilter: 'בביצוע', // Default filter for work schedule
             // Worker daily rates (expenses calculated from work assignments)
             workerDailyRates: {
                 'a': 500, // יאסר
@@ -3398,8 +3399,10 @@
             const dates = state.calendarViewMode === 'week' ? getWeekDates(state.calendarDate) : getMonthDates(state.calendarDate);
             const isWeekView = state.calendarViewMode === 'week';
             
-            // Filter only projects with status "בביצוע"
-            const activeProjects = (state.allProjects || []).filter(p => p.status === 'בביצוע');
+            // Filter projects by selected status
+            const activeProjects = (state.allProjects || []).filter(p => 
+                state.sidurStatusFilter === 'all' ? true : p.status === state.sidurStatusFilter
+            );
             
             // Group projects by client
             const projectsByClient = {};
@@ -3437,16 +3440,18 @@
 
                     <div class="bg-white rounded-lg shadow-lg p-6">
                         <!-- Calendar Controls -->
-                        <div class="flex justify-between items-center mb-6">
+                        <div class="flex justify-between items-center mb-6 flex-wrap gap-4">
                             <div class="flex items-center gap-4">
-                                <button onclick="state.calendarDate.setDate(state.calendarDate.getDate() - ${isWeekView ? 7 : 30}); render()" 
+                                <!-- RTL: Right arrow goes BACK -->
+                                <button onclick="state.calendarDate.setDate(state.calendarDate.getDate() + ${isWeekView ? 7 : 30}); render()" 
                                     class="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300">
                                     ←
                                 </button>
                                 <h2 class="text-xl font-bold">
                                     ${state.calendarDate.toLocaleDateString('he-IL', { month: 'long', year: 'numeric' })}
                                 </h2>
-                                <button onclick="state.calendarDate.setDate(state.calendarDate.getDate() + ${isWeekView ? 7 : 30}); render()" 
+                                <!-- RTL: Left arrow goes FORWARD -->
+                                <button onclick="state.calendarDate.setDate(state.calendarDate.getDate() - ${isWeekView ? 7 : 30}); render()" 
                                     class="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300">
                                     →
                                 </button>
@@ -3455,7 +3460,16 @@
                                     היום
                                 </button>
                             </div>
-                            <div class="flex gap-2">
+                            <div class="flex gap-2 items-center">
+                                <!-- Status Filter -->
+                                <select onchange="state.sidurStatusFilter = this.value; render()" 
+                                    class="px-3 py-2 border rounded bg-white">
+                                    <option value="all" ${state.sidurStatusFilter === 'all' ? 'selected' : ''}>כל הסטטוסים</option>
+                                    ${projectStatuses.map(status => `
+                                        <option value="${status}" ${state.sidurStatusFilter === status ? 'selected' : ''}>${status}</option>
+                                    `).join('')}
+                                </select>
+                                <!-- View Mode -->
                                 <button onclick="state.calendarViewMode = 'week'; render()" 
                                     class="px-4 py-2 rounded ${isWeekView ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}">
                                     שבוע
@@ -3538,7 +3552,7 @@
                                                                 const showAllocation = workerAssignmentsOnDate.length > 1;
                                                                 
                                                                 return `
-                                                                    <div class="bg-green-100 border border-green-400 rounded px-2 py-1 mb-1 text-xs relative group inline-block mr-1" 
+                                                                    <div class="bg-green-100 border border-green-400 rounded px-2 py-1 mb-1 text-xs relative group block" 
                                                                          title="${showAllocation ? 'עובד זה משובץ ל-' + workerAssignmentsOnDate.length + ' פרויקטים ביום זה' : ''}">
                                                                         <span class="font-semibold">${worker ? worker.name : assignment.workerId}</span>
                                                                         ${showAllocation ? `<span class="text-blue-700 font-bold ml-1">(${allocation}%)</span>` : ''}
