@@ -3442,18 +3442,18 @@
                         <!-- Calendar Controls -->
                         <div class="flex justify-between items-center mb-6 flex-wrap gap-4">
                             <div class="flex items-center gap-4">
-                                <!-- RTL: Right arrow goes BACK -->
-                                <button onclick="state.calendarDate.setDate(state.calendarDate.getDate() + ${isWeekView ? 7 : 30}); render()" 
+                                <!-- Right arrow = Previous -->
+                                <button onclick="state.calendarDate.setDate(state.calendarDate.getDate() - ${isWeekView ? 7 : 30}); render()" 
                                     class="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300">
-                                    ←
+                                    →
                                 </button>
                                 <h2 class="text-xl font-bold">
                                     ${state.calendarDate.toLocaleDateString('he-IL', { month: 'long', year: 'numeric' })}
                                 </h2>
-                                <!-- RTL: Left arrow goes FORWARD -->
-                                <button onclick="state.calendarDate.setDate(state.calendarDate.getDate() - ${isWeekView ? 7 : 30}); render()" 
+                                <!-- Left arrow = Next -->
+                                <button onclick="state.calendarDate.setDate(state.calendarDate.getDate() + ${isWeekView ? 7 : 30}); render()" 
                                     class="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300">
-                                    →
+                                    ←
                                 </button>
                                 <button onclick="state.calendarDate = new Date(); render()" 
                                     class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
@@ -3506,12 +3506,17 @@
                                     <thead>
                                         <tr>
                                             <th class="border p-2 bg-gray-100 text-sm sticky right-0 z-10" style="min-width: 200px;">לקוח / פרויקט</th>
-                                            ${dates.map(date => `
-                                                <th class="border p-2 bg-gray-100 text-xs ${date.getDay() === 6 ? 'bg-purple-50' : date.getDay() === 0 ? 'bg-blue-50' : ''}">
+                                            ${dates.map(date => {
+                                                const isToday = formatDate(new Date()) === formatDate(date);
+                                                const isFriday = date.getDay() === 5;
+                                                const isSaturday = date.getDay() === 6;
+                                                return `
+                                                <th class="border p-2 text-xs ${isToday ? 'bg-blue-100 font-bold' : isFriday ? 'bg-purple-100' : isSaturday ? 'bg-purple-50' : 'bg-gray-100'}">
                                                     <div>${getDayName(date)}</div>
-                                                    <div class="text-xs text-gray-600">${formatDisplayDate(date)}</div>
+                                                    <div class="text-xs ${isToday ? 'text-blue-700 font-bold' : 'text-gray-600'}">${formatDisplayDate(date)}</div>
                                                 </th>
-                                            `).join('')}
+                                            `;
+                                            }).join('')}
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -3541,11 +3546,15 @@
                                                     ${dates.map(date => {
                                                         const assignments = getAssignmentsForDateAndProject(date, project.id);
                                                         const dateStr = formatDate(date);
+                                                        const isToday = formatDate(new Date()) === dateStr;
+                                                        const isFriday = date.getDay() === 5;
+                                                        const isSaturday = date.getDay() === 6;
+                                                        const bgColor = isToday ? '#dbeafe' : isFriday ? '#f3e8ff' : isSaturday ? '#faf5ff' : '';
                                                         return `
-                                                            <td class="border p-1 align-top ${date.getDay() === 6 ? 'bg-purple-50' : date.getDay() === 0 ? 'bg-blue-50' : ''}"
+                                                            <td class="border p-1 align-top ${isToday ? 'bg-blue-100' : isFriday ? 'bg-purple-100' : isSaturday ? 'bg-purple-50' : ''}"
                                                                 ondragover="event.preventDefault(); event.dataTransfer.dropEffect = 'copy'; this.style.backgroundColor = '#d1fae5';"
-                                                                ondragleave="this.style.backgroundColor = '${date.getDay() === 6 ? '#faf5ff' : date.getDay() === 0 ? '#eff6ff' : ''}';"
-                                                                ondrop="event.preventDefault(); this.style.backgroundColor = '${date.getDay() === 6 ? '#faf5ff' : date.getDay() === 0 ? '#eff6ff' : ''}'; if (state.draggedWorker) { addWorkAssignment(state.draggedWorker, '${project.id}', '${dateStr}'); }"
+                                                                ondragleave="this.style.backgroundColor = '${bgColor}';"
+                                                                ondrop="event.preventDefault(); this.style.backgroundColor = '${bgColor}'; if (state.draggedWorker) { addWorkAssignment(state.draggedWorker, '${project.id}', '${dateStr}'); }"
                                                                 style="min-height: 50px; min-width: 80px;">
                                                                 ${assignments.map(assignment => {
                                                                     const worker = workers.find(w => w.id === assignment.workerId);
@@ -3668,8 +3677,12 @@
                                 <span>עובד משובץ למספר פרויקטים באותו יום</span>
                             </div>
                             <div class="flex items-center gap-2">
-                                <div class="w-4 h-4 bg-blue-50 border"></div>
-                                <span>יום ראשון</span>
+                                <div class="w-4 h-4 bg-blue-100 border border-blue-300"></div>
+                                <span>היום</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-4 h-4 bg-purple-100 border border-purple-300"></div>
+                                <span>יום ו׳</span>
                             </div>
                             <div class="flex items-center gap-2">
                                 <div class="w-4 h-4 bg-purple-50 border"></div>
