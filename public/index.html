@@ -35,6 +35,11 @@
             </div>
         </div>
     </div>
+    
+    <!-- Version Info Footer -->
+    <div class="fixed bottom-2 left-2 text-xs text-gray-400 bg-white/50 backdrop-blur-sm px-2 py-1 rounded">
+        v0.1.9 | expenses
+    </div>
 
     <script>
         // Firebase Configuration
@@ -56,6 +61,23 @@
 
         // Development mode - set to false for production
         const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        
+        // Comment out emulator usage for now - just use production for testing
+        // To enable emulators later (requires Java), uncomment below:
+        /*
+        if (isDevelopment) {
+            console.log('🔧 Running in DEVELOPMENT mode with Firebase Emulators');
+            db.useEmulator('localhost', 8080);
+            auth.useEmulator('http://localhost:9099');
+            storage.useEmulator('localhost', 9199);
+        }
+        */
+        
+        if (isDevelopment) {
+            console.log('🔧 Running in DEVELOPMENT mode (connected to production Firestore)');
+        } else {
+            console.log('🚀 Running in PRODUCTION mode');
+        }
         
         // Authentication restrictions
         const ALLOWED_DOMAIN = 'elka-hashmal.co.il';
@@ -159,7 +181,16 @@
             calendarDate: new Date(), // Current date being viewed
             draggedWorker: null, // Currently dragged worker
             loadingAssignments: false,
-            assignmentsLoaded: false
+            assignmentsLoaded: false,
+            // Worker daily rates (expenses calculated from work assignments)
+            workerDailyRates: {
+                'a': 500, // יאסר
+                'b': 500, // פריד
+                'c': 500, // חמודי
+                'd': 500, // סלימאן
+                'e': 500  // מישל
+            },
+            editingWorkerRates: false
         };
 
         // Project statuses
@@ -2807,11 +2838,29 @@
         // ===== HELPER FUNCTIONS =====
         
         function calculateTotals(project) {
-            const invoices = project.invoices || [];
-            const totalExpenses = invoices.reduce((sum, inv) => sum + inv.amount, 0);
-            const profit = project.revenue - totalExpenses;
+            // Calculate expenses from orders
+            const projectOrders = state.orders ? state.orders.filter(o => o.projectId === project.id) : [];
+            const ordersExpenses = projectOrders.reduce((sum, order) => sum + (order.totalSum || 0), 0);
+            
+            // Calculate worker expenses from work assignments (סידור עבודה)
+            const projectWorkAssignments = state.workAssignments ? state.workAssignments.filter(a => a.projectId === project.id) : [];
+            const workerExpensesTotal = projectWorkAssignments.reduce((sum, assignment) => {
+                const dailyRate = state.workerDailyRates[assignment.workerId] || 0;
+                return sum + dailyRate;
+            }, 0);
+            
+            // Total expenses
+            const totalExpenses = ordersExpenses + workerExpensesTotal;
+            const profit = (project.revenue || 0) - totalExpenses;
             const profitMargin = project.revenue > 0 ? (profit / project.revenue) * 100 : 0;
-            return { totalExpenses, profit, profitMargin };
+            
+            return { 
+                totalExpenses, 
+                ordersExpenses, 
+                workerExpensesTotal, 
+                profit, 
+                profitMargin 
+            };
         }
 
         function handleFileUpload(event) {
@@ -3721,8 +3770,8 @@
             const dates = state.calendarViewMode === 'week' ? getWeekDates(state.calendarDate) : getMonthDates(state.calendarDate);
             const isWeekView = state.calendarViewMode === 'week';
             
-            // Filter only active projects (activeInSchedule = true)
-            const activeProjects = (state.allProjects || []).filter(p => p.activeInSchedule !== false);
+            // Filter only projects with status "בביצוע"
+            const activeProjects = (state.allProjects || []).filter(p => p.status === 'בביצוע');
             
             // Group projects by client
             const projectsByClient = {};
@@ -3905,7 +3954,7 @@
         }
 
         function renderInvoiceView() {
-            const { totalExpenses, profit, profitMargin } = calculateTotals(state.selectedProject);
+            const { totalExpenses, ordersExpenses, workerExpensesTotal, profit, profitMargin } = calculateTotals(state.selectedProject);
             
             return `
                 <div class="max-w-7xl mx-auto p-6">
@@ -3923,12 +3972,7 @@
 
                     <div class="bg-white rounded-lg shadow-lg p-6">
                         <div class="flex justify-between items-center mb-6">
-                            <h2 class="text-2xl font-bold text-gray-800">חשבוניות</h2>
-                            <button onclick="state.showNewInvoice = !state.showNewInvoice; render()" 
-                                class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 flex items-center gap-2">
-                                <span class="text-xl">+</span>
-                                חשבונית חדשה
-                            </button>
+                            <h2 class="text-2xl font-bold text-gray-800">הוצאות פרויקט</h2>
                         </div>
 
                         ${state.selectedProject.status === 'אומדן' ? `
@@ -3958,19 +4002,27 @@
                             </div>
                         ` : ''}
 
-                        ${state.showNewInvoice ? renderNewInvoiceForm() : ''}
-                        ${state.editingInvoice ? renderEditInvoiceForm() : ''}
-
-                        <div class="grid grid-cols-3 gap-4 mb-6">
-                            <div class="bg-red-50 p-4 rounded-lg">
+                        <div class="grid grid-cols-4 gap-4 mb-6">
+                            <div class="bg-orange-50 p-4 rounded-lg border-2 border-orange-200">
+                                <div class="text-sm text-gray-600 mb-1">הזמנות</div>
+                                <div class="text-2xl font-bold text-orange-600">₪${ordersExpenses.toLocaleString()}</div>
+                            </div>
+                            <div class="bg-purple-50 p-4 rounded-lg border-2 border-purple-200">
+                                <div class="text-sm text-gray-600 mb-1">עובדים</div>
+                                <div class="text-2xl font-bold text-purple-600">₪${workerExpensesTotal.toLocaleString()}</div>
+                            </div>
+                            <div class="bg-red-50 p-4 rounded-lg border-2 border-red-200">
                                 <div class="text-sm text-gray-600 mb-1">סך הוצאות</div>
                                 <div class="text-2xl font-bold text-red-600">₪${totalExpenses.toLocaleString()}</div>
                             </div>
                             <div class="bg-blue-50 p-4 rounded-lg">
                                 <div class="text-sm text-gray-600 mb-1">הכנסות</div>
-                                <div class="text-2xl font-bold text-blue-600">₪${state.selectedProject.revenue.toLocaleString()}</div>
+                                <div class="text-2xl font-bold text-blue-600">₪${(state.selectedProject.revenue || 0).toLocaleString()}</div>
                             </div>
-                            <div class="${profit >= 0 ? 'bg-green-50' : 'bg-red-50'} p-4 rounded-lg">
+                        </div>
+                        
+                        <div class="grid grid-cols-1 gap-4 mb-6">
+                            <div class="${profit >= 0 ? 'bg-green-50' : 'bg-red-50'} p-4 rounded-lg border-2 ${profit >= 0 ? 'border-green-200' : 'border-red-200'}">
                                 <div class="text-sm text-gray-600 mb-1">רווח נקי</div>
                                 <div class="text-2xl font-bold ${profit >= 0 ? 'text-green-600' : 'text-red-600'}">
                                     ₪${profit.toLocaleString()}
@@ -3979,7 +4031,29 @@
                             </div>
                         </div>
 
-                        ${renderInvoicesTable()}
+                        <!-- Worker Expenses Section -->
+                        <div class="mb-6">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-xl font-bold text-gray-800">הוצאות עובדים (מסידור העבודה)</h3>
+                                <a href="#" onclick="showWorkScheduleView(); return false;" 
+                                    class="text-blue-600 hover:text-blue-700 text-sm">
+                                    עבור לסידור עבודה ←
+                                </a>
+                            </div>
+                            ${renderWorkerExpensesList()}
+                        </div>
+
+                        <!-- Orders Section -->
+                        <div>
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-xl font-bold text-gray-800">הזמנות</h3>
+                                <a href="#" onclick="showOrdersView(); return false;" 
+                                    class="text-blue-600 hover:text-blue-700 text-sm">
+                                    עבור לניהול הזמנות ←
+                                </a>
+                            </div>
+                            ${renderProjectOrdersList()}
+                        </div>
                     </div>
                 </div>
             `;
@@ -4255,6 +4329,155 @@
                 group.classList.add('hidden');
                 arrow.textContent = '▼';
             }
+        }
+
+        function renderWorkerExpensesList() {
+            // Get work assignments for this project from סידור עבודה
+            const projectWorkAssignments = (state.workAssignments || []).filter(a => a.projectId === state.selectedProject.id);
+            
+            // Group by worker
+            const workerDays = {};
+            projectWorkAssignments.forEach(assignment => {
+                if (!workerDays[assignment.workerId]) {
+                    const worker = workers.find(w => w.id === assignment.workerId);
+                    workerDays[assignment.workerId] = {
+                        workerName: worker ? worker.name : assignment.workerId,
+                        days: []
+                    };
+                }
+                workerDays[assignment.workerId].days.push(assignment.date);
+            });
+            
+            // Daily rates editing section
+            if (state.editingWorkerRates) {
+                return `
+                    <div class="mb-4 p-4 bg-blue-50 rounded-lg border-2 border-blue-300">
+                        <h4 class="font-bold mb-3">ערוך תעריפים יומיים</h4>
+                        ${workers.map(w => `
+                            <div class="flex items-center justify-between p-2 mb-2 bg-white rounded border">
+                                <span class="font-medium">${w.name}</span>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-sm text-gray-600">₪</span>
+                                    <input type="number" value="${state.workerDailyRates[w.id]}" 
+                                        onchange="state.workerDailyRates['${w.id}'] = parseInt(this.value) || 0; render()"
+                                        class="w-24 p-1 border rounded text-center" step="10"/>
+                                    <span class="text-sm text-gray-600">ליום</span>
+                                </div>
+                            </div>
+                        `).join('')}
+                        <div class="flex gap-2 mt-3">
+                            <button onclick="state.editingWorkerRates = false; render()" 
+                                class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                                שמור
+                            </button>
+                            <button onclick="state.editingWorkerRates = false; render()" 
+                                class="flex-1 bg-gray-400 text-white px-4 py-2 rounded-lg hover:bg-gray-500">
+                                ביטול
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            if (Object.keys(workerDays).length === 0) {
+                return `
+                    <div class="p-4 text-center text-gray-400 border border-gray-200 rounded-lg">
+                        <p class="mb-2">אין עובדים משובצים לפרויקט זה בסידור העבודה</p>
+                        <p class="text-xs">שבץ עובדים בסידור העבודה כדי לראות את ההוצאות כאן</p>
+                    </div>
+                `;
+            }
+            
+            const totalDays = Object.values(workerDays).reduce((sum, w) => sum + w.days.length, 0);
+            const totalCost = projectWorkAssignments.reduce((sum, a) => sum + (state.workerDailyRates[a.workerId] || 0), 0);
+            
+            return `
+                <div class="space-y-3">
+                    <!-- Summary Card -->
+                    <div class="p-3 bg-purple-100 rounded-lg border-2 border-purple-300">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <div class="text-sm text-gray-600">סה"כ ימי עבודה</div>
+                                <div class="text-2xl font-bold text-purple-700">${totalDays}</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-sm text-gray-600">סה"כ הוצאות</div>
+                                <div class="text-2xl font-bold text-purple-700">₪${totalCost.toLocaleString()}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Worker Details -->
+                    <div class="space-y-2">
+                        ${Object.entries(workerDays).map(([workerId, data]) => {
+                            const dailyRate = state.workerDailyRates[workerId] || 0;
+                            const workerTotal = data.days.length * dailyRate;
+                            return `
+                                <div class="p-3 bg-purple-50 rounded border hover:border-purple-300">
+                                    <div class="flex justify-between items-center">
+                                        <div class="flex-1">
+                                            <div class="font-bold">${data.workerName}</div>
+                                            <div class="text-sm text-gray-600">
+                                                ${data.days.length} ימים × ₪${dailyRate.toLocaleString()} = 
+                                                <span class="font-semibold text-purple-700">₪${workerTotal.toLocaleString()}</span>
+                                            </div>
+                                            <div class="text-xs text-gray-500 mt-1">
+                                                ${data.days.sort().map(d => new Date(d).toLocaleDateString('he-IL', { day: 'numeric', month: 'numeric' })).join(', ')}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                    
+                    <!-- Edit Rates Button -->
+                    <button onclick="state.editingWorkerRates = true; render()" 
+                        class="w-full bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 flex items-center justify-center gap-2">
+                        <span>⚙️</span>
+                        <span>ערוך תעריפים יומיים</span>
+                    </button>
+                </div>
+            `;
+        }
+
+        function renderProjectOrdersList() {
+            const projectOrders = (state.orders || []).filter(o => o.projectId === state.selectedProject.id);
+            
+            if (projectOrders.length === 0) {
+                return `
+                    <div class="p-4 text-center text-gray-400 border border-gray-200 rounded-lg">
+                        אין הזמנות לפרויקט זה
+                    </div>
+                `;
+            }
+            
+            return `
+                <div class="space-y-2">
+                    ${projectOrders.map(order => `
+                        <div class="flex items-center justify-between p-3 bg-orange-50 rounded border hover:border-orange-300">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="font-bold">הזמנה ${order.orderNumber}</span>
+                                    <span class="text-xs text-gray-500">${new Date(order.orderDate).toLocaleDateString('he-IL')}</span>
+                                </div>
+                                <div class="text-sm text-gray-600">
+                                    ספק: ${order.supplierName}
+                                </div>
+                                <div class="text-sm font-semibold text-orange-700">
+                                    סה"כ: ₪${order.totalSum.toLocaleString()}
+                                </div>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="generateOrderPDF('${order.id}')" 
+                                    class="text-blue-600 hover:text-blue-700 text-sm px-2 py-1 border border-blue-600 rounded">
+                                    📄 הורד PDF
+                                </button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
         }
 
         function renderSuppliersView() {
