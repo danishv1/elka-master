@@ -44,6 +44,18 @@ export function initSidurComponent(context) {
                 return;
             }
             
+            // Check if worker is already assigned to this project on this date
+            const existingAssignment = state.workAssignments.find(a => 
+                a.workerId === workerId && 
+                a.projectId === projectId && 
+                a.date === date
+            );
+            
+            if (existingAssignment) {
+                alert('עובד זה כבר משובץ לפרויקט זה באותו יום');
+                return;
+            }
+            
             const assignmentData = {
                 workerId: workerId,
                 projectId: projectId,
@@ -140,8 +152,48 @@ export function initSidurComponent(context) {
         return state.workAssignments.filter(a => a.date === date);
     }
 
+    /**
+     * Get the proportional allocation (fraction of the day) for a worker on a specific project and date
+     * @param {string} workerId - Worker ID
+     * @param {string} projectId - Project ID
+     * @param {string} date - Date in YYYY-MM-DD format
+     * @returns {number} - Fraction of the day (e.g., 0.5 for half day, 0.33 for third of day)
+     */
+    function getWorkerAllocationForProjectOnDate(workerId, projectId, date) {
+        const workerAssignmentsOnDate = getWorkerAssignmentsForDate(workerId, date);
+        const totalProjects = workerAssignmentsOnDate.length;
+        
+        if (totalProjects === 0) return 0;
+        
+        // Each project gets an equal share of the worker's time
+        return 1 / totalProjects;
+    }
+
+    /**
+     * Get all projects a worker is assigned to on a specific date with their allocation
+     * @param {string} workerId - Worker ID
+     * @param {string} date - Date in YYYY-MM-DD format
+     * @returns {Array} - Array of {projectId, projectName, allocation} objects
+     */
+    function getWorkerDayAllocation(workerId, date) {
+        const assignments = getWorkerAssignmentsForDate(workerId, date);
+        const totalProjects = assignments.length;
+        const allocation = totalProjects > 0 ? 1 / totalProjects : 0;
+        
+        return assignments.map(a => ({
+            projectId: a.projectId,
+            projectName: a.projectName,
+            allocation: allocation,
+            allocationPercent: Math.round(allocation * 100)
+        }));
+    }
+
     function getWorkerTotalDays(workerId) {
-        return state.workAssignments.filter(a => a.workerId === workerId).length;
+        // Group by date and count each date as one day regardless of how many projects
+        const dates = new Set(state.workAssignments
+            .filter(a => a.workerId === workerId)
+            .map(a => a.date));
+        return dates.size;
     }
 
     function getWorkerTotalExpenses(workerId) {
@@ -152,10 +204,77 @@ export function initSidurComponent(context) {
 
     function getProjectWorkerExpenses(projectId) {
         const projectAssignments = state.workAssignments.filter(a => a.projectId === projectId);
+        
         return projectAssignments.reduce((total, assignment) => {
             const dailyRate = state.workerDailyRates[assignment.workerId] || 0;
-            return total + dailyRate;
+            // Get the allocation for this worker on this project on this date
+            const allocation = getWorkerAllocationForProjectOnDate(
+                assignment.workerId, 
+                assignment.projectId, 
+                assignment.date
+            );
+            return total + (dailyRate * allocation);
         }, 0);
+    }
+
+    /**
+     * Get detailed worker expenses for a project with allocation breakdown
+     * @param {string} projectId - Project ID
+     * @returns {Object} - {total, breakdown: [{workerId, workerName, days, allocations, cost}]}
+     */
+    function getProjectWorkerExpensesDetailed(projectId) {
+        const projectAssignments = state.workAssignments.filter(a => a.projectId === projectId);
+        
+        // Group by worker
+        const workerData = {};
+        
+        projectAssignments.forEach(assignment => {
+            if (!workerData[assignment.workerId]) {
+                workerData[assignment.workerId] = {
+                    workerId: assignment.workerId,
+                    assignments: []
+                };
+            }
+            workerData[assignment.workerId].assignments.push(assignment);
+        });
+        
+        const breakdown = Object.values(workerData).map(data => {
+            const workerId = data.workerId;
+            const dailyRate = state.workerDailyRates[workerId] || 0;
+            
+            // Calculate total allocation and cost
+            let totalAllocation = 0;
+            const allocations = [];
+            
+            data.assignments.forEach(assignment => {
+                const allocation = getWorkerAllocationForProjectOnDate(
+                    workerId, 
+                    projectId, 
+                    assignment.date
+                );
+                totalAllocation += allocation;
+                allocations.push({
+                    date: assignment.date,
+                    allocation: allocation,
+                    allocationPercent: Math.round(allocation * 100),
+                    cost: dailyRate * allocation
+                });
+            });
+            
+            const worker = state.workers?.find(w => w.id === workerId);
+            
+            return {
+                workerId: workerId,
+                workerName: worker?.name || workerId,
+                totalDays: totalAllocation,
+                allocations: allocations,
+                cost: dailyRate * totalAllocation
+            };
+        });
+        
+        const total = breakdown.reduce((sum, w) => sum + w.cost, 0);
+        
+        return { total, breakdown };
     }
 
     // Return public API
@@ -171,7 +290,10 @@ export function initSidurComponent(context) {
         getAllAssignmentsForDate,
         getWorkerTotalDays,
         getWorkerTotalExpenses,
-        getProjectWorkerExpenses
+        getProjectWorkerExpenses,
+        getWorkerAllocationForProjectOnDate,
+        getWorkerDayAllocation,
+        getProjectWorkerExpensesDetailed
     };
 }
 
