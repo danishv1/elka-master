@@ -57,6 +57,23 @@
         // Development mode - set to false for production
         const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
         
+        // Comment out emulator usage for now - just use production for testing
+        // To enable emulators later (requires Java), uncomment below:
+        /*
+        if (isDevelopment) {
+            console.log('🔧 Running in DEVELOPMENT mode with Firebase Emulators');
+            db.useEmulator('localhost', 8080);
+            auth.useEmulator('http://localhost:9099');
+            storage.useEmulator('localhost', 9199);
+        }
+        */
+        
+        if (isDevelopment) {
+            console.log('🔧 Running in DEVELOPMENT mode (connected to production Firestore)');
+        } else {
+            console.log('🚀 Running in PRODUCTION mode');
+        }
+        
         // Authentication restrictions
         const ALLOWED_DOMAIN = 'elka-hashmal.co.il';
         const EMAIL_WHITELIST = [
@@ -3557,8 +3574,8 @@
             const dates = state.calendarViewMode === 'week' ? getWeekDates(state.calendarDate) : getMonthDates(state.calendarDate);
             const isWeekView = state.calendarViewMode === 'week';
             
-            // Filter only active projects (activeInSchedule = true)
-            const activeProjects = (state.allProjects || []).filter(p => p.activeInSchedule !== false);
+            // Filter only projects with status "בביצוע"
+            const activeProjects = (state.allProjects || []).filter(p => p.status === 'בביצוע');
             
             // Group projects by client
             const projectsByClient = {};
