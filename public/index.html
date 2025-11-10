@@ -38,7 +38,7 @@
     
     <!-- Version Info Footer -->
     <div class="fixed bottom-2 left-2 text-xs text-gray-400 bg-white/50 backdrop-blur-sm px-2 py-1 rounded">
-        v0.1.7 | expenses
+        v0.1.8 | expenses
     </div>
 
     <script>
@@ -4160,6 +4160,19 @@
             const projectExpenses = (state.workerExpenses || []).filter(e => e.projectId === state.selectedProject.id);
             
             if (state.showNewWorkerExpense) {
+                // Ensure newWorkerExpense is initialized
+                if (!state.newWorkerExpense) {
+                    state.newWorkerExpense = {
+                        projectId: state.selectedProject.id,
+                        workerId: '',
+                        date: new Date().toISOString().split('T')[0],
+                        hours: '',
+                        hourlyRate: '',
+                        totalAmount: 0,
+                        description: ''
+                    };
+                }
+                
                 return `
                     <div class="mb-4 p-4 bg-purple-50 rounded-lg border-2 border-purple-300">
                         <h4 class="font-bold mb-3">הוצאת עובד חדשה</h4>
