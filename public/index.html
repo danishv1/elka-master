@@ -3529,9 +3529,19 @@
                                                             style="min-height: 50px; min-width: 80px;">
                                                             ${assignments.map(assignment => {
                                                                 const worker = workers.find(w => w.id === assignment.workerId);
+                                                                // Calculate allocation percentage
+                                                                const workerAssignmentsOnDate = state.workAssignments.filter(a => 
+                                                                    a.workerId === assignment.workerId && a.date === dateStr
+                                                                );
+                                                                const allocation = workerAssignmentsOnDate.length > 0 ? 
+                                                                    Math.round(100 / workerAssignmentsOnDate.length) : 100;
+                                                                const showAllocation = workerAssignmentsOnDate.length > 1;
+                                                                
                                                                 return `
-                                                                    <div class="bg-green-100 border border-green-400 rounded px-2 py-1 mb-1 text-xs relative group inline-block mr-1">
+                                                                    <div class="bg-green-100 border border-green-400 rounded px-2 py-1 mb-1 text-xs relative group inline-block mr-1" 
+                                                                         title="${showAllocation ? 'עובד זה משובץ ל-' + workerAssignmentsOnDate.length + ' פרויקטים ביום זה' : ''}">
                                                                         <span class="font-semibold">${worker ? worker.name : assignment.workerId}</span>
+                                                                        ${showAllocation ? `<span class="text-blue-700 font-bold ml-1">(${allocation}%)</span>` : ''}
                                                                         <button onclick="deleteWorkAssignment('${assignment.id}')" 
                                                                             class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity">
                                                                             ×
