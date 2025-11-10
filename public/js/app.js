@@ -9,6 +9,7 @@ import { initProjectsComponent } from './components/projects.js';
 import { initSuppliersComponent } from './components/suppliers.js';
 import { initOrdersComponent } from './components/orders.js';
 import { initSidurComponent } from './components/sidur.js';
+import { initSettingsComponent } from './components/settings.js';
 
 // Global app instance
 let appInstance = null;
@@ -57,6 +58,7 @@ export async function initApp(firebaseConfig) {
     const suppliersComponent = initSuppliersComponent(context);
     const ordersComponent = initOrdersComponent(context);
     const sidurComponent = initSidurComponent(context);
+    const settingsComponent = initSettingsComponent(context);
 
     // Add cross-component dependencies to context
     context.loadProjectsForClient = projectsComponent.loadProjectsForClient;
@@ -76,7 +78,8 @@ export async function initApp(firebaseConfig) {
             projects: projectsComponent,
             suppliers: suppliersComponent,
             orders: ordersComponent,
-            sidur: sidurComponent
+            sidur: sidurComponent,
+            settings: settingsComponent
         }
     };
 
@@ -86,7 +89,8 @@ export async function initApp(firebaseConfig) {
         projects: projectsComponent,
         suppliers: suppliersComponent,
         orders: ordersComponent,
-        sidur: sidurComponent
+        sidur: sidurComponent,
+        settings: settingsComponent
     };
 
     // Expose commonly used functions globally
@@ -255,6 +259,8 @@ function render() {
         content = renderOrdersView();
     } else if (state.view === 'workSchedule') {
         content = renderWorkScheduleView();
+    } else if (state.view === 'settings') {
+        content = renderSettingsView();
     } else if (state.view === 'all-projects') {
         content = renderAllProjectsView();
     } else {
@@ -370,6 +376,10 @@ function renderWorkScheduleView() {
 
 function renderAllProjectsView() {
     return '<div>All Projects View - Implementation needed</div>';
+}
+
+function renderSettingsView() {
+    return '<div>Settings View - Implementation needed</div>';
 }
 
 // Export for use in other modules

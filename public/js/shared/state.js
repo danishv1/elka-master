@@ -21,7 +21,7 @@ export const initialState = {
     editingSupplier: null,
     editingOrder: null,
     viewingAttachment: null,
-    view: 'clients', // 'clients', 'projects', 'suppliers', 'orders', 'all-projects', 'workSchedule'
+    view: 'clients', // 'clients', 'projects', 'suppliers', 'orders', 'all-projects', 'workSchedule', 'settings'
     projectStatusFilter: 'all', // 'all' or specific status
     allProjectsStatusFilter: 'all', // Status filter for all-projects view
     ordersViewTab: 'all', // 'all' or 'by-project'
