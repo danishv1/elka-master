@@ -3515,18 +3515,7 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                            ` : `
-                                <!-- MONTH VIEW: Calendar grid style -->
-                                <table class="w-full border-collapse">
-                                    <thead>
-                                        <tr>
-                                            ${['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'].map((day, idx) => `
-                                                <th class="border p-2 ${idx >= 5 ? 'bg-purple-100' : 'bg-gray-100'} text-center">${day}</th>
-                                            `).join('')}
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                            `}
+                            ` : ''}
                                     ${isWeekView ? `
                                         ${Object.keys(projectsByClient).length === 0 ? `
                                             <tr>
@@ -3584,73 +3573,75 @@
                                             `).join('')}
                                         `).join('')}
                                     ` : `
-                                        ${(() => {
-                                            // MONTH VIEW: Calendar grid - organize dates by weeks
-                                            const weeks = [];
-                                            for (let i = 0; i < dates.length; i += 7) {
-                                                weeks.push(dates.slice(i, i + 7));
-                                            }
+                                        <!-- MONTH VIEW: CSS Grid Calendar -->
+                                        </table>
+                                        <div class="grid grid-cols-7 gap-0">
+                                            <!-- Day Headers -->
+                                            ${['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'].map((day, idx) => `
+                                                <div class="p-4 text-center font-semibold text-gray-600 ${idx >= 5 ? 'bg-purple-100' : 'bg-gray-100'} border border-gray-200">${day}</div>
+                                            `).join('')}
                                             
-                                            return weeks.map(week => `
-                                                <tr>
-                                                    ${week.map(date => {
-                                                        const dateStr = formatDate(date);
-                                                        const dayAssignments = state.workAssignments.filter(a => a.date === dateStr);
-                                                        const isToday = formatDate(new Date()) === dateStr;
-                                                        const isCurrentMonth = date.getMonth() === state.calendarDate.getMonth();
-                                                        const isFriOrSat = date.getDay() === 5 || date.getDay() === 6;
-                                                        
-                                                        // Group assignments by project
-                                                        const projectGroups = {};
-                                                        dayAssignments.forEach(assignment => {
-                                                            if (!projectGroups[assignment.projectId]) {
-                                                                const project = activeProjects.find(p => p.id === assignment.projectId);
-                                                                projectGroups[assignment.projectId] = {
-                                                                    projectName: project ? project.name : '',
-                                                                    workers: []
-                                                                };
-                                                            }
-                                                            const worker = workers.find(w => w.id === assignment.workerId);
-                                                            const workerAssignmentsOnDate = state.workAssignments.filter(a => 
-                                                                a.workerId === assignment.workerId && a.date === dateStr
-                                                            );
-                                                            const allocation = workerAssignmentsOnDate.length > 0 ? 
-                                                                Math.round(100 / workerAssignmentsOnDate.length) : 100;
-                                                            const showAllocation = workerAssignmentsOnDate.length > 1;
-                                                            
-                                                            projectGroups[assignment.projectId].workers.push({
-                                                                assignmentId: assignment.id,
-                                                                name: worker ? worker.name : assignment.workerId,
-                                                                allocation: allocation,
-                                                                showAllocation: showAllocation
-                                                            });
-                                                        });
-                                                        
-                                                        return `
-                                                            <td class="border p-2 align-top ${isFriOrSat ? 'bg-purple-50' : 'bg-gray-50'} ${!isCurrentMonth ? 'opacity-50' : ''} ${isToday ? 'bg-blue-100 ring-2 ring-blue-500' : ''}"
-                                                                style="width: 14.28%; min-height: 150px; vertical-align: top;">
-                                                                <div class="text-right mb-1">
-                                                                    <span class="text-xs ${isToday ? 'bg-blue-500 text-white px-2 py-1 rounded-full font-bold' : !isCurrentMonth ? 'text-gray-400' : 'text-gray-700'} font-semibold">${date.getDate()}</span>
-                                                                </div>
-                                                                <div class="space-y-1 text-xs">
-                                                                    ${Object.values(projectGroups).map(group => `
-                                                                        <div class="bg-yellow-100 border border-yellow-400 rounded px-1 py-1 relative group">
-                                                                            <div class="font-semibold text-xs truncate mb-1">${group.projectName}</div>
-                                                                            ${group.workers.map(worker => `
-                                                                                <div class="text-xs text-gray-700">
-                                                                                    ${worker.name}
-                                                                                    ${worker.showAllocation ? `<span class="text-blue-700 font-bold">(${worker.allocation}%)</span>` : ''}
-                                                                                </div>
-                                                                            `).join('')}
+                                            <!-- Calendar Days -->
+                                            ${dates.map(date => {
+                                                const dateStr = formatDate(date);
+                                                const dayAssignments = state.workAssignments.filter(a => a.date === dateStr);
+                                                const isToday = formatDate(new Date()) === dateStr;
+                                                const isCurrentMonth = date.getMonth() === state.calendarDate.getMonth();
+                                                const isFriOrSat = date.getDay() === 5 || date.getDay() === 6;
+                                                
+                                                // Group assignments by project
+                                                const projectGroups = {};
+                                                dayAssignments.forEach(assignment => {
+                                                    if (!projectGroups[assignment.projectId]) {
+                                                        const project = activeProjects.find(p => p.id === assignment.projectId);
+                                                        projectGroups[assignment.projectId] = {
+                                                            projectName: project ? project.name : '',
+                                                            workers: []
+                                                        };
+                                                    }
+                                                    const worker = workers.find(w => w.id === assignment.workerId);
+                                                    const workerAssignmentsOnDate = state.workAssignments.filter(a => 
+                                                        a.workerId === assignment.workerId && a.date === dateStr
+                                                    );
+                                                    const allocation = workerAssignmentsOnDate.length > 0 ? 
+                                                        Math.round(100 / workerAssignmentsOnDate.length) : 100;
+                                                    const showAllocation = workerAssignmentsOnDate.length > 1;
+                                                    
+                                                    projectGroups[assignment.projectId].workers.push({
+                                                        assignmentId: assignment.id,
+                                                        name: worker ? worker.name : assignment.workerId,
+                                                        allocation: allocation,
+                                                        showAllocation: showAllocation
+                                                    });
+                                                });
+                                                
+                                                return `
+                                                    <div class="min-h-[120px] px-2 py-2 relative cursor-pointer hover:bg-gray-100 transition-colors
+                                                        ${isFriOrSat ? 'bg-purple-50' : 'bg-white'} 
+                                                        ${!isCurrentMonth ? 'bg-gray-50 text-gray-400' : ''} 
+                                                        ${isToday ? 'bg-blue-50 ring-2 ring-blue-500 ring-inset' : ''} 
+                                                        border border-gray-200">
+                                                        <div class="text-sm font-medium mb-2">
+                                                            <span class="${isToday ? 'bg-blue-500 text-white px-2 py-1 rounded-full font-bold' : ''}">${date.getDate()}</span>
+                                                        </div>
+                                                        <div class="space-y-1">
+                                                            ${Object.values(projectGroups).map(group => `
+                                                                <div class="bg-yellow-100 border border-yellow-400 rounded px-2 py-1 relative group">
+                                                                    <div class="font-semibold text-xs truncate mb-1">${group.projectName}</div>
+                                                                    ${group.workers.map(worker => `
+                                                                        <div class="text-xs text-gray-700">
+                                                                            ${worker.name}
+                                                                            ${worker.showAllocation ? `<span class="text-blue-700 font-bold">(${worker.allocation}%)</span>` : ''}
                                                                         </div>
                                                                     `).join('')}
                                                                 </div>
-                                                            </td>
-                                                        `;
-                                                    }).join('')}
-                                                </tr>
-                                            `).join('');
-                                        })()}
+                                                            `).join('')}
+                                                        </div>
+                                                    </div>
+                                                `;
+                                            }).join('')}
+                                        </div>
+                                        <table style="display:none;">
                                     `}
                                 </tbody>
                             </table>
