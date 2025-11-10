@@ -3495,7 +3495,7 @@
                             <div class="mb-6">
                                 <h3 class="font-bold mb-3">עובדים:</h3>
                                 <div class="flex gap-2 flex-wrap">
-                                    ${workers.map(worker => `
+                                    ${window.workers.map(worker => `
                                         <div draggable="true" 
                                             ondragstart="state.draggedWorker = '${worker.id}'; event.dataTransfer.effectAllowed = 'copy';"
                                             ondragend="state.draggedWorker = null;"
@@ -4316,7 +4316,7 @@
                 return `
                     <div class="mb-4 p-4 bg-blue-50 rounded-lg border-2 border-blue-300">
                         <h4 class="font-bold mb-3">ערוך תעריפים יומיים</h4>
-                        ${workers.map(w => `
+                        ${window.workers.map(w => `
                             <div class="flex items-center justify-between p-2 mb-2 bg-white rounded border">
                                 <span class="font-medium">${w.name}</span>
                                 <div class="flex items-center gap-2">
