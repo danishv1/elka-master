@@ -2758,6 +2758,7 @@
             state.selectedClient = null;
             state.selectedProject = null;
             updateHistory();
+            render();
             if (window.appHandlers && window.appHandlers.settings) {
                 window.appHandlers.settings.loadSettings();
             }
