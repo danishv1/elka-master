@@ -2665,11 +2665,26 @@
         // ===== HELPER FUNCTIONS =====
         
         function calculateTotals(project) {
-            const invoices = project.invoices || [];
-            const totalExpenses = invoices.reduce((sum, inv) => sum + inv.amount, 0);
-            const profit = project.revenue - totalExpenses;
+            // Calculate expenses from orders
+            const projectOrders = state.orders ? state.orders.filter(o => o.projectId === project.id) : [];
+            const ordersExpenses = projectOrders.reduce((sum, order) => sum + (order.totalSum || 0), 0);
+            
+            // Calculate expenses from worker expenses
+            const projectWorkerExpenses = state.workerExpenses ? state.workerExpenses.filter(e => e.projectId === project.id) : [];
+            const workerExpensesTotal = projectWorkerExpenses.reduce((sum, expense) => sum + (expense.totalAmount || 0), 0);
+            
+            // Total expenses
+            const totalExpenses = ordersExpenses + workerExpensesTotal;
+            const profit = (project.revenue || 0) - totalExpenses;
             const profitMargin = project.revenue > 0 ? (profit / project.revenue) * 100 : 0;
-            return { totalExpenses, profit, profitMargin };
+            
+            return { 
+                totalExpenses, 
+                ordersExpenses, 
+                workerExpensesTotal, 
+                profit, 
+                profitMargin 
+            };
         }
 
         function handleFileUpload(event) {
