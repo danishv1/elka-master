@@ -3758,7 +3758,7 @@
         }
 
         function renderInvoiceView() {
-            const { totalExpenses, profit, profitMargin } = calculateTotals(state.selectedProject);
+            const { totalExpenses, ordersExpenses, workerExpensesTotal, profit, profitMargin } = calculateTotals(state.selectedProject);
             
             return `
                 <div class="max-w-7xl mx-auto p-6">
@@ -3776,12 +3776,7 @@
 
                     <div class="bg-white rounded-lg shadow-lg p-6">
                         <div class="flex justify-between items-center mb-6">
-                            <h2 class="text-2xl font-bold text-gray-800">חשבוניות</h2>
-                            <button onclick="state.showNewInvoice = !state.showNewInvoice; render()" 
-                                class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 flex items-center gap-2">
-                                <span class="text-xl">+</span>
-                                חשבונית חדשה
-                            </button>
+                            <h2 class="text-2xl font-bold text-gray-800">הוצאות פרויקט</h2>
                         </div>
 
                         ${state.selectedProject.status === 'אומדן' ? `
@@ -3811,19 +3806,27 @@
                             </div>
                         ` : ''}
 
-                        ${state.showNewInvoice ? renderNewInvoiceForm() : ''}
-                        ${state.editingInvoice ? renderEditInvoiceForm() : ''}
-
-                        <div class="grid grid-cols-3 gap-4 mb-6">
-                            <div class="bg-red-50 p-4 rounded-lg">
+                        <div class="grid grid-cols-4 gap-4 mb-6">
+                            <div class="bg-orange-50 p-4 rounded-lg border-2 border-orange-200">
+                                <div class="text-sm text-gray-600 mb-1">הזמנות</div>
+                                <div class="text-2xl font-bold text-orange-600">₪${ordersExpenses.toLocaleString()}</div>
+                            </div>
+                            <div class="bg-purple-50 p-4 rounded-lg border-2 border-purple-200">
+                                <div class="text-sm text-gray-600 mb-1">עובדים</div>
+                                <div class="text-2xl font-bold text-purple-600">₪${workerExpensesTotal.toLocaleString()}</div>
+                            </div>
+                            <div class="bg-red-50 p-4 rounded-lg border-2 border-red-200">
                                 <div class="text-sm text-gray-600 mb-1">סך הוצאות</div>
                                 <div class="text-2xl font-bold text-red-600">₪${totalExpenses.toLocaleString()}</div>
                             </div>
                             <div class="bg-blue-50 p-4 rounded-lg">
                                 <div class="text-sm text-gray-600 mb-1">הכנסות</div>
-                                <div class="text-2xl font-bold text-blue-600">₪${state.selectedProject.revenue.toLocaleString()}</div>
+                                <div class="text-2xl font-bold text-blue-600">₪${(state.selectedProject.revenue || 0).toLocaleString()}</div>
                             </div>
-                            <div class="${profit >= 0 ? 'bg-green-50' : 'bg-red-50'} p-4 rounded-lg">
+                        </div>
+                        
+                        <div class="grid grid-cols-1 gap-4 mb-6">
+                            <div class="${profit >= 0 ? 'bg-green-50' : 'bg-red-50'} p-4 rounded-lg border-2 ${profit >= 0 ? 'border-green-200' : 'border-red-200'}">
                                 <div class="text-sm text-gray-600 mb-1">רווח נקי</div>
                                 <div class="text-2xl font-bold ${profit >= 0 ? 'text-green-600' : 'text-red-600'}">
                                     ₪${profit.toLocaleString()}
@@ -3832,7 +3835,30 @@
                             </div>
                         </div>
 
-                        ${renderInvoicesTable()}
+                        <!-- Worker Expenses Section -->
+                        <div class="mb-6">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-xl font-bold text-gray-800">הוצאות עובדים</h3>
+                                <button onclick="state.showNewWorkerExpense = true; state.newWorkerExpense.projectId = '${state.selectedProject.id}'; render()" 
+                                    class="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 flex items-center gap-2">
+                                    <span class="text-xl">+</span>
+                                    הוצאת עובד חדשה
+                                </button>
+                            </div>
+                            ${renderWorkerExpensesList()}
+                        </div>
+
+                        <!-- Orders Section -->
+                        <div>
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-xl font-bold text-gray-800">הזמנות</h3>
+                                <a href="#" onclick="showOrdersView(); return false;" 
+                                    class="text-blue-600 hover:text-blue-700 text-sm">
+                                    עבור לניהול הזמנות ←
+                                </a>
+                            </div>
+                            ${renderProjectOrdersList()}
+                        </div>
                     </div>
                 </div>
             `;
@@ -4108,6 +4134,180 @@
                 group.classList.add('hidden');
                 arrow.textContent = '▼';
             }
+        }
+
+        function renderWorkerExpensesList() {
+            const projectExpenses = (state.workerExpenses || []).filter(e => e.projectId === state.selectedProject.id);
+            
+            if (state.showNewWorkerExpense) {
+                return `
+                    <div class="mb-4 p-4 bg-purple-50 rounded-lg border-2 border-purple-300">
+                        <h4 class="font-bold mb-3">הוצאת עובד חדשה</h4>
+                        
+                        <select onchange="state.newWorkerExpense.workerId = this.value; render()" 
+                            class="w-full p-2 mb-2 border rounded">
+                            <option value="">בחר עובד</option>
+                            ${workers.map(w => `
+                                <option value="${w.id}" ${state.newWorkerExpense.workerId === w.id ? 'selected' : ''}>${w.name}</option>
+                            `).join('')}
+                        </select>
+                        
+                        <input type="date" value="${state.newWorkerExpense.date}" 
+                            onchange="state.newWorkerExpense.date = this.value; render()" 
+                            class="w-full p-2 mb-2 border rounded"/>
+                        
+                        <input type="number" placeholder="שעות" step="0.5" value="${state.newWorkerExpense.hours}" 
+                            onchange="state.newWorkerExpense.hours = this.value; render()" 
+                            class="w-full p-2 mb-2 border rounded"/>
+                        
+                        <input type="number" placeholder="תעריף לשעה (₪)" step="1" value="${state.newWorkerExpense.hourlyRate}" 
+                            onchange="state.newWorkerExpense.hourlyRate = this.value; render()" 
+                            class="w-full p-2 mb-2 border rounded"/>
+                        
+                        <div class="p-2 mb-2 bg-white rounded border text-center">
+                            <span class="text-sm text-gray-600">סכום כולל: </span>
+                            <span class="font-bold text-lg">₪${((parseFloat(state.newWorkerExpense.hours) || 0) * (parseFloat(state.newWorkerExpense.hourlyRate) || 0)).toLocaleString()}</span>
+                        </div>
+                        
+                        <textarea placeholder="תיאור (אופציונלי)" 
+                            onchange="state.newWorkerExpense.description = this.value" 
+                            class="w-full p-2 mb-3 border rounded" rows="2">${state.newWorkerExpense.description}</textarea>
+                        
+                        <div class="flex gap-2">
+                            <button onclick="addWorkerExpense()" 
+                                class="flex-1 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700">
+                                שמור
+                            </button>
+                            <button onclick="state.showNewWorkerExpense = false; render()" 
+                                class="flex-1 bg-gray-400 text-white px-4 py-2 rounded-lg hover:bg-gray-500">
+                                ביטול
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            if (projectExpenses.length === 0) {
+                return `
+                    <div class="p-4 text-center text-gray-400 border border-gray-200 rounded-lg">
+                        אין הוצאות עובדים לפרויקט זה
+                    </div>
+                `;
+            }
+            
+            return `
+                <div class="space-y-2">
+                    ${projectExpenses.map(expense => `
+                        ${state.editingWorkerExpense && state.editingWorkerExpense.id === expense.id ? `
+                            <div class="p-4 bg-purple-50 rounded-lg border-2 border-purple-300">
+                                <h4 class="font-bold mb-3">ערוך הוצאת עובד</h4>
+                                
+                                <select onchange="state.editingWorkerExpense.workerId = this.value; render()" 
+                                    class="w-full p-2 mb-2 border rounded">
+                                    ${workers.map(w => `
+                                        <option value="${w.id}" ${state.editingWorkerExpense.workerId === w.id ? 'selected' : ''}>${w.name}</option>
+                                    `).join('')}
+                                </select>
+                                
+                                <input type="date" value="${state.editingWorkerExpense.date}" 
+                                    onchange="state.editingWorkerExpense.date = this.value; render()" 
+                                    class="w-full p-2 mb-2 border rounded"/>
+                                
+                                <input type="number" placeholder="שעות" step="0.5" value="${state.editingWorkerExpense.hours}" 
+                                    onchange="state.editingWorkerExpense.hours = this.value; render()" 
+                                    class="w-full p-2 mb-2 border rounded"/>
+                                
+                                <input type="number" placeholder="תעריף לשעה (₪)" step="1" value="${state.editingWorkerExpense.hourlyRate}" 
+                                    onchange="state.editingWorkerExpense.hourlyRate = this.value; render()" 
+                                    class="w-full p-2 mb-2 border rounded"/>
+                                
+                                <div class="p-2 mb-2 bg-white rounded border text-center">
+                                    <span class="text-sm text-gray-600">סכום כולל: </span>
+                                    <span class="font-bold text-lg">₪${((parseFloat(state.editingWorkerExpense.hours) || 0) * (parseFloat(state.editingWorkerExpense.hourlyRate) || 0)).toLocaleString()}</span>
+                                </div>
+                                
+                                <textarea placeholder="תיאור (אופציונלי)" 
+                                    onchange="state.editingWorkerExpense.description = this.value" 
+                                    class="w-full p-2 mb-3 border rounded" rows="2">${state.editingWorkerExpense.description || ''}</textarea>
+                                
+                                <div class="flex gap-2">
+                                    <button onclick="updateWorkerExpense('${expense.id}')" 
+                                        class="flex-1 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700">
+                                        שמור
+                                    </button>
+                                    <button onclick="state.editingWorkerExpense = null; render()" 
+                                        class="flex-1 bg-gray-400 text-white px-4 py-2 rounded-lg hover:bg-gray-500">
+                                        ביטול
+                                    </button>
+                                </div>
+                            </div>
+                        ` : `
+                            <div class="flex items-center justify-between p-3 bg-purple-50 rounded border hover:border-purple-300">
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <span class="font-bold">${expense.workerName}</span>
+                                        <span class="text-xs text-gray-500">${new Date(expense.date).toLocaleDateString('he-IL')}</span>
+                                    </div>
+                                    <div class="text-sm text-gray-600">
+                                        ${expense.hours} שעות × ₪${expense.hourlyRate.toLocaleString()} = 
+                                        <span class="font-semibold text-purple-700">₪${expense.totalAmount.toLocaleString()}</span>
+                                    </div>
+                                    ${expense.description ? `<div class="text-xs text-gray-500 mt-1">${expense.description}</div>` : ''}
+                                </div>
+                                <div class="flex gap-2">
+                                    <button onclick="state.editingWorkerExpense = ${JSON.stringify(expense).replace(/"/g, '&quot;')}; render()" 
+                                        class="text-blue-600 hover:text-blue-700 text-sm px-2 py-1">
+                                        ✏️ ערוך
+                                    </button>
+                                    <button onclick="deleteWorkerExpense('${expense.id}')" 
+                                        class="text-red-600 hover:text-red-700 text-sm">
+                                        🗑️
+                                    </button>
+                                </div>
+                            </div>
+                        `}
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function renderProjectOrdersList() {
+            const projectOrders = (state.orders || []).filter(o => o.projectId === state.selectedProject.id);
+            
+            if (projectOrders.length === 0) {
+                return `
+                    <div class="p-4 text-center text-gray-400 border border-gray-200 rounded-lg">
+                        אין הזמנות לפרויקט זה
+                    </div>
+                `;
+            }
+            
+            return `
+                <div class="space-y-2">
+                    ${projectOrders.map(order => `
+                        <div class="flex items-center justify-between p-3 bg-orange-50 rounded border hover:border-orange-300">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="font-bold">הזמנה ${order.orderNumber}</span>
+                                    <span class="text-xs text-gray-500">${new Date(order.orderDate).toLocaleDateString('he-IL')}</span>
+                                </div>
+                                <div class="text-sm text-gray-600">
+                                    ספק: ${order.supplierName}
+                                </div>
+                                <div class="text-sm font-semibold text-orange-700">
+                                    סה"כ: ₪${order.totalSum.toLocaleString()}
+                                </div>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="generateOrderPDF('${order.id}')" 
+                                    class="text-blue-600 hover:text-blue-700 text-sm px-2 py-1 border border-blue-600 rounded">
+                                    📄 הורד PDF
+                                </button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
         }
 
         function renderSuppliersView() {
