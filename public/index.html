@@ -103,7 +103,7 @@
     
     <!-- Version Info Footer -->
     <div class="fixed bottom-2 left-2 text-xs text-gray-400 bg-white/50 backdrop-blur-sm px-2 py-1 rounded">
-        v1.2.1 | sidur-improvements 🎨
+        v1.3.0 | main 🚀
     </div>
 
     <script>
@@ -3508,10 +3508,9 @@
                                             <th class="border p-2 bg-gray-100 text-sm sticky right-0 z-10" style="min-width: 200px;">לקוח / פרויקט</th>
                                             ${dates.map(date => {
                                                 const isToday = formatDate(new Date()) === formatDate(date);
-                                                const isFriday = date.getDay() === 5;
-                                                const isSaturday = date.getDay() === 6;
+                                                const isWeekend = date.getDay() === 5 || date.getDay() === 6;
                                                 return `
-                                                <th class="border p-2 text-xs ${isToday ? 'bg-blue-100 font-bold' : isFriday ? 'bg-purple-100' : isSaturday ? 'bg-purple-50' : 'bg-gray-100'}">
+                                                <th class="border p-2 text-xs ${isToday ? 'bg-blue-100 font-bold' : isWeekend ? 'bg-purple-100' : 'bg-gray-100'}">
                                                     <div>${getDayName(date)}</div>
                                                     <div class="text-xs ${isToday ? 'text-blue-700 font-bold' : 'text-gray-600'}">${formatDisplayDate(date)}</div>
                                                 </th>
@@ -3547,11 +3546,10 @@
                                                         const assignments = getAssignmentsForDateAndProject(date, project.id);
                                                         const dateStr = formatDate(date);
                                                         const isToday = formatDate(new Date()) === dateStr;
-                                                        const isFriday = date.getDay() === 5;
-                                                        const isSaturday = date.getDay() === 6;
-                                                        const bgColor = isToday ? '#dbeafe' : isFriday ? '#f3e8ff' : isSaturday ? '#faf5ff' : '';
+                                                        const isWeekend = date.getDay() === 5 || date.getDay() === 6;
+                                                        const bgColor = isToday ? '#dbeafe' : isWeekend ? '#f3e8ff' : '';
                                                         return `
-                                                            <td class="border p-1 align-top ${isToday ? 'bg-blue-100' : isFriday ? 'bg-purple-100' : isSaturday ? 'bg-purple-50' : ''}"
+                                                            <td class="border p-1 align-top ${isToday ? 'bg-blue-100' : isWeekend ? 'bg-purple-100' : ''}"
                                                                 ondragover="event.preventDefault(); event.dataTransfer.dropEffect = 'copy'; this.style.backgroundColor = '#d1fae5';"
                                                                 ondragleave="this.style.backgroundColor = '${bgColor}';"
                                                                 ondrop="event.preventDefault(); this.style.backgroundColor = '${bgColor}'; if (state.draggedWorker) { addWorkAssignment(state.draggedWorker, '${project.id}', '${dateStr}'); }"
@@ -3682,11 +3680,7 @@
                             </div>
                             <div class="flex items-center gap-2">
                                 <div class="w-4 h-4 bg-purple-100 border border-purple-300"></div>
-                                <span>יום ו׳</span>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <div class="w-4 h-4 bg-purple-50 border"></div>
-                                <span>שבת</span>
+                                <span>סופ״ש</span>
                             </div>
                         </div>
                         
