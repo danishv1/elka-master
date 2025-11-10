@@ -103,7 +103,7 @@
     
     <!-- Version Info Footer -->
     <div class="fixed bottom-2 left-2 text-xs text-gray-400 bg-white/50 backdrop-blur-sm px-2 py-1 rounded">
-        v1.2.0 | sidur-improvements 🎨
+        v1.2.1 | sidur-improvements 🎨
     </div>
 
     <script>
@@ -3481,20 +3481,22 @@
                             </div>
                         </div>
 
-                        <!-- Workers List (Draggable) -->
-                        <div class="mb-6">
-                            <h3 class="font-bold mb-3">עובדים:</h3>
-                            <div class="flex gap-2 flex-wrap">
-                                ${workers.map(worker => `
-                                    <div draggable="true" 
-                                        ondragstart="state.draggedWorker = '${worker.id}'; event.dataTransfer.effectAllowed = 'copy';"
-                                        ondragend="state.draggedWorker = null;"
-                                        class="bg-blue-100 border-2 border-blue-300 px-4 py-2 rounded cursor-move hover:bg-blue-200 hover:shadow-lg transition-all">
-                                        ${worker.name}
-                                    </div>
-                                `).join('')}
+                        <!-- Workers List (Draggable) - Only in Week View -->
+                        ${isWeekView ? `
+                            <div class="mb-6">
+                                <h3 class="font-bold mb-3">עובדים:</h3>
+                                <div class="flex gap-2 flex-wrap">
+                                    ${workers.map(worker => `
+                                        <div draggable="true" 
+                                            ondragstart="state.draggedWorker = '${worker.id}'; event.dataTransfer.effectAllowed = 'copy';"
+                                            ondragend="state.draggedWorker = null;"
+                                            class="bg-blue-100 border-2 border-blue-300 px-4 py-2 rounded cursor-move hover:bg-blue-200 hover:shadow-lg transition-all">
+                                            ${worker.name}
+                                        </div>
+                                    `).join('')}
+                                </div>
                             </div>
-                        </div>
+                        ` : ''}
 
                         <!-- Calendar Grid -->
                         <div class="overflow-x-auto">
@@ -3519,7 +3521,7 @@
                                     <thead>
                                         <tr>
                                             ${['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'].map((day, idx) => `
-                                                <th class="border p-2 bg-gray-100 text-center ${idx === 5 ? 'bg-purple-50' : idx === 6 ? 'bg-blue-50' : ''}">${day}</th>
+                                                <th class="border p-2 ${idx >= 5 ? 'bg-purple-100' : 'bg-gray-100'} text-center">${day}</th>
                                             `).join('')}
                                         </tr>
                                     </thead>
@@ -3596,39 +3598,52 @@
                                                         const dayAssignments = state.workAssignments.filter(a => a.date === dateStr);
                                                         const isToday = formatDate(new Date()) === dateStr;
                                                         const isCurrentMonth = date.getMonth() === state.calendarDate.getMonth();
+                                                        const isFriOrSat = date.getDay() === 5 || date.getDay() === 6;
+                                                        
+                                                        // Group assignments by project
+                                                        const projectGroups = {};
+                                                        dayAssignments.forEach(assignment => {
+                                                            if (!projectGroups[assignment.projectId]) {
+                                                                const project = activeProjects.find(p => p.id === assignment.projectId);
+                                                                projectGroups[assignment.projectId] = {
+                                                                    projectName: project ? project.name : '',
+                                                                    workers: []
+                                                                };
+                                                            }
+                                                            const worker = workers.find(w => w.id === assignment.workerId);
+                                                            const workerAssignmentsOnDate = state.workAssignments.filter(a => 
+                                                                a.workerId === assignment.workerId && a.date === dateStr
+                                                            );
+                                                            const allocation = workerAssignmentsOnDate.length > 0 ? 
+                                                                Math.round(100 / workerAssignmentsOnDate.length) : 100;
+                                                            const showAllocation = workerAssignmentsOnDate.length > 1;
+                                                            
+                                                            projectGroups[assignment.projectId].workers.push({
+                                                                assignmentId: assignment.id,
+                                                                name: worker ? worker.name : assignment.workerId,
+                                                                allocation: allocation,
+                                                                showAllocation: showAllocation
+                                                            });
+                                                        });
                                                         
                                                         return `
-                                                            <td class="border p-2 align-top h-32 ${date.getDay() === 6 ? 'bg-purple-50' : date.getDay() === 0 ? 'bg-blue-50' : ''} ${!isCurrentMonth ? 'bg-gray-100' : ''} ${isToday ? 'ring-2 ring-blue-500' : ''}"
+                                                            <td class="border p-2 align-top h-32 ${isFriOrSat ? 'bg-purple-50' : 'bg-gray-50'} ${!isCurrentMonth ? 'opacity-50' : ''} ${isToday ? 'ring-2 ring-blue-500' : ''}"
                                                                 style="width: 14.28%; vertical-align: top;">
                                                                 <div class="text-right mb-1">
                                                                     <span class="text-xs ${!isCurrentMonth ? 'text-gray-400' : 'text-gray-700'} font-semibold">${date.getDate()}</span>
                                                                 </div>
                                                                 <div class="space-y-1 text-xs overflow-auto max-h-24">
-                                                                    ${dayAssignments.map(assignment => {
-                                                                        const project = activeProjects.find(p => p.id === assignment.projectId);
-                                                                        const worker = workers.find(w => w.id === assignment.workerId);
-                                                                        const workerAssignmentsOnDate = state.workAssignments.filter(a => 
-                                                                            a.workerId === assignment.workerId && a.date === dateStr
-                                                                        );
-                                                                        const allocation = workerAssignmentsOnDate.length > 0 ? 
-                                                                            Math.round(100 / workerAssignmentsOnDate.length) : 100;
-                                                                        const showAllocation = workerAssignmentsOnDate.length > 1;
-                                                                        
-                                                                        return `
-                                                                            <div class="bg-yellow-100 border border-yellow-400 rounded px-1 py-1 relative group">
-                                                                                <div class="font-semibold text-xs truncate">${project ? project.name : ''}</div>
+                                                                    ${Object.values(projectGroups).map(group => `
+                                                                        <div class="bg-yellow-100 border border-yellow-400 rounded px-1 py-1 relative group">
+                                                                            <div class="font-semibold text-xs truncate mb-1">${group.projectName}</div>
+                                                                            ${group.workers.map(worker => `
                                                                                 <div class="text-xs text-gray-700">
-                                                                                    ${worker ? worker.name : assignment.workerId}
-                                                                                    ${showAllocation ? `<span class="text-blue-700 font-bold">(${allocation}%)</span>` : ''}
+                                                                                    ${worker.name}
+                                                                                    ${worker.showAllocation ? `<span class="text-blue-700 font-bold">(${worker.allocation}%)</span>` : ''}
                                                                                 </div>
-                                                                                <button onclick="deleteWorkAssignment('${assignment.id}'); event.stopPropagation();" 
-                                                                                    class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-3 h-3 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                                    ×
-                                                                                </button>
-                                                                            </div>
-                                                                        `;
-                                                                    }).join('')}
-                                                                    ${dayAssignments.length > 2 ? `<div class="text-xs text-gray-500 text-center mt-1">+עוד ${dayAssignments.length - 2}</div>` : ''}
+                                                                            `).join('')}
+                                                                        </div>
+                                                                    `).join('')}
                                                                 </div>
                                                             </td>
                                                         `;
