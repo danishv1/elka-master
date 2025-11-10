@@ -3625,8 +3625,10 @@
                                                             <span class="${isToday ? 'bg-blue-500 text-white px-2 py-1 rounded-full font-bold' : ''}">${date.getDate()}</span>
                                                         </div>
                                                         <div class="space-y-1">
-                                                            ${Object.values(projectGroups).map(group => `
-                                                                <div class="bg-yellow-100 border border-yellow-400 rounded px-2 py-1 relative group">
+                                                            ${Object.entries(projectGroups).map(([projectId, group]) => `
+                                                                <div class="bg-yellow-100 border border-yellow-400 rounded px-2 py-1 relative group hover:bg-yellow-200 cursor-pointer transition-colors"
+                                                                     onclick="event.stopPropagation(); state.currentView = 'projectView'; state.selectedProjectId = '${projectId}'; render();"
+                                                                     title="לחץ לצפייה בפרויקט">
                                                                     <div class="font-semibold text-xs truncate mb-1">${group.projectName}</div>
                                                                     ${group.workers.map(worker => `
                                                                         <div class="text-xs text-gray-700">
