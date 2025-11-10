@@ -3535,7 +3535,7 @@
                                                 <tr class="hover:bg-gray-50">
                                                     <td class="border p-2 bg-gray-50 font-semibold text-sm sticky right-0 z-10 cursor-pointer hover:bg-gray-200 transition-colors" 
                                                         title="לחץ לצפייה בפרויקט: ${project.name}"
-                                                        onclick="state.currentView = 'projectView'; state.selectedProjectId = '${project.id}'; render();">
+                                                        onclick="selectClient('${project.clientId}'); selectProject('${project.id}');">
                                                         <div class="truncate">${project.name}</div>
                                                     </td>
                                                     ${dates.map(date => {
@@ -3627,9 +3627,11 @@
                                                             <span class="${isToday ? 'bg-blue-500 text-white px-2 py-1 rounded-full font-bold' : ''}">${date.getDate()}</span>
                                                         </div>
                                                         <div class="space-y-1">
-                                                            ${Object.entries(projectGroups).map(([projectId, group]) => `
+                                                            ${Object.entries(projectGroups).map(([projectId, group]) => {
+                                                                const project = activeProjects.find(p => p.id === projectId);
+                                                                return `
                                                                 <div class="bg-yellow-100 border border-yellow-400 rounded px-2 py-1 relative group hover:bg-yellow-200 cursor-pointer transition-colors"
-                                                                     onclick="event.stopPropagation(); state.currentView = 'projectView'; state.selectedProjectId = '${projectId}'; render();"
+                                                                     onclick="event.stopPropagation(); selectClient('${project?.clientId}'); selectProject('${projectId}');"
                                                                      title="לחץ לצפייה בפרויקט">
                                                                     <div class="font-semibold text-xs truncate mb-1">${group.projectName}</div>
                                                                     ${group.workers.map(worker => `
@@ -3639,7 +3641,8 @@
                                                                         </div>
                                                                     `).join('')}
                                                                 </div>
-                                                            `).join('')}
+                                                            `;
+                                                            }).join('')}
                                                         </div>
                                                     </div>
                                                 `;
