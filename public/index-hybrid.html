@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מערכת ניהול פרויקטים</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    
+    <!-- PDF.js for PDF support -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        // Configure PDF.js worker
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    </script>
+    
+    <!-- Cropper.js for image cropping -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+    
+    <!-- pdf-lib for PDF generation -->
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    
+    <!-- Import Modular Components -->
+    <script type="module">
+        // Import all components
+        import { initClientsComponent } from './js/components/clients.js';
+        import { initProjectsComponent } from './js/components/projects.js';
+        import { initSuppliersComponent } from './js/components/suppliers.js';
+        import { initOrdersComponent } from './js/components/orders.js';
+        import { initSidurComponent } from './js/components/sidur.js';
+        import { state } from './js/shared/state.js';
+        import { categories, projectStatuses, workers } from './js/shared/constants.js';
+        import { calculateTotals } from './js/shared/utils.js';
+
+        // Store in window for access from inline scripts
+        window.moduleState = state;
+        window.moduleCategories = categories;
+        window.moduleProjectStatuses = projectStatuses;
+        window.moduleWorkers = workers;
+        window.moduleCalculateTotals = calculateTotals;
+        
+        // Initialize components when Firebase is ready
+        window.initModularComponents = function() {
+            console.log('🔥 Initializing modular components...');
+            
+            const context = {
+                state: window.state, // Use the existing state from index.html
+                db: window.db,
+                firebase: window.firebase,
+                storage: window.storage,
+                auth: window.auth,
+                isDevelopment: window.isDevelopment,
+                categories: window.categories,
+                projectStatuses: window.projectStatuses,
+                workers: window.workers,
+                calculateTotals: (project) => calculateTotals(project, window.state),
+                render: window.render,
+                updateHistory: window.updateHistory
+            };
+
+            // Initialize all components
+            const clientsComponent = initClientsComponent(context);
+            const projectsComponent = initProjectsComponent(context);
+            const suppliersComponent = initSuppliersComponent(context);
+            const ordersComponent = initOrdersComponent(context);
+            const sidurComponent = initSidurComponent(context);
+
+            // Add cross-component dependencies
+            context.loadProjectsForClient = projectsComponent.loadProjectsForClient;
+            context.loadAllProjects = projectsComponent.loadAllProjects;
+
+            // Expose globally
+            window.appHandlers = {
+                clients: clientsComponent,
+                projects: projectsComponent,
+                suppliers: suppliersComponent,
+                orders: ordersComponent,
+                sidur: sidurComponent
+            };
+
+            console.log('✅ Modular components initialized!');
+            console.log('💡 Access via window.appHandlers');
+            console.log('📦 Available:', Object.keys(window.appHandlers));
+        };
+    </script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <div id="app">
+        <div class="flex items-center justify-center min-h-screen">
+            <div class="text-center">
+                <div class="text-2xl mb-4">⏳ טוען...</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Version Info Footer -->
+    <div class="fixed bottom-2 left-2 text-xs text-gray-400 bg-white/50 backdrop-blur-sm px-2 py-1 rounded">
+        v0.2.0 | main | hybrid 🔥
+    </div>
+
+    <!-- 
+        NOTE: The rest of your existing index.html content goes below this line.
+        All your existing JavaScript code (5000+ lines) stays exactly the same.
+        
+        After this loads, call window.initModularComponents() to activate the modular components.
+        Then you can gradually replace functions like:
+        
+        OLD:
+        async function loadClients() { ... your code ... }
+        
+        NEW (when ready to migrate):
+        async function loadClients() {
+            return window.appHandlers.clients.loadClients();
+        }
+    -->
+    
+    <script>
+        // Your existing Firebase configuration and all other code from index.html goes here
+        // This is just a template - you need to copy everything from line 44 onwards of index.html
+        
+        // After everything loads, initialize modular components
+        window.addEventListener('DOMContentLoaded', () => {
+            // Give it a moment for modules to load
+            setTimeout(() => {
+                if (window.initModularComponents) {
+                    window.initModularComponents();
+                }
+            }, 100);
+        });
+    </script>
+</body>
+</html>
+

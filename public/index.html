@@ -26,6 +26,71 @@
     
     <!-- pdf-lib for PDF generation -->
     <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    
+    <!-- Import Modular Components -->
+    <script type="module">
+        // Import all components
+        import { initClientsComponent } from './js/components/clients.js';
+        import { initProjectsComponent } from './js/components/projects.js';
+        import { initSuppliersComponent } from './js/components/suppliers.js';
+        import { initOrdersComponent } from './js/components/orders.js';
+        import { initSidurComponent } from './js/components/sidur.js';
+        
+        // Initialize components after Firebase and state are ready
+        window.addEventListener('DOMContentLoaded', () => {
+            // Wait for Firebase and state to initialize
+            const initModules = () => {
+                if (!window.db || !window.state || !window.render) {
+                    console.log('⏳ Waiting for app to initialize...');
+                    setTimeout(initModules, 100);
+                    return;
+                }
+                
+                console.log('🔥 Initializing modular components...');
+                
+                const context = {
+                    state: window.state,
+                    db: window.db,
+                    firebase: window.firebase,
+                    storage: window.storage,
+                    auth: window.auth,
+                    isDevelopment: window.isDevelopment,
+                    categories: window.categories,
+                    projectStatuses: window.projectStatuses,
+                    workers: window.workers,
+                    calculateTotals: window.calculateTotals,
+                    render: window.render,
+                    updateHistory: window.updateHistory
+                };
+
+                // Initialize all components
+                const clientsComponent = initClientsComponent(context);
+                const projectsComponent = initProjectsComponent(context);
+                const suppliersComponent = initSuppliersComponent(context);
+                const ordersComponent = initOrdersComponent(context);
+                const sidurComponent = initSidurComponent(context);
+
+                // Add cross-component dependencies
+                context.loadProjectsForClient = projectsComponent.loadProjectsForClient;
+                context.loadAllProjects = projectsComponent.loadAllProjects;
+
+                // Expose globally for use in inline onclick handlers
+                window.appHandlers = {
+                    clients: clientsComponent,
+                    projects: projectsComponent,
+                    suppliers: suppliersComponent,
+                    orders: ordersComponent,
+                    sidur: sidurComponent
+                };
+
+                console.log('✅ Modular components initialized!');
+                console.log('📦 Available components:', Object.keys(window.appHandlers));
+                console.log('💡 Example: window.appHandlers.clients.loadClients()');
+            };
+            
+            initModules();
+        });
+    </script>
 </head>
 <body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
     <div id="app">
@@ -38,7 +103,7 @@
     
     <!-- Version Info Footer -->
     <div class="fixed bottom-2 left-2 text-xs text-gray-400 bg-white/50 backdrop-blur-sm px-2 py-1 rounded">
-        v0.2.0 | main
+        v0.2.1 | hybrid 🔥
     </div>
 
     <script>

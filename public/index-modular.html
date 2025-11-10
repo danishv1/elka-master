@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מערכת ניהול פרויקטים</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    
+    <!-- PDF.js for PDF support -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        // Configure PDF.js worker
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    </script>
+    
+    <!-- Cropper.js for image cropping -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+    
+    <!-- pdf-lib for PDF generation -->
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <div id="app">
+        <div class="flex items-center justify-center min-h-screen">
+            <div class="text-center">
+                <div class="text-2xl mb-4">⏳ טוען...</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Version Info Footer -->
+    <div class="fixed bottom-2 left-2 text-xs text-gray-400 bg-white/50 backdrop-blur-sm px-2 py-1 rounded">
+        v0.2.0 | main | modular
+    </div>
+
+    <!-- Modular App Initialization -->
+    <script type="module">
+        import { initApp } from './js/app.js';
+        
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBimaxCYm5k-vQ44nWROiTg3ffgkYuY3kU",
+            authDomain: "elka-73bb6.firebaseapp.com",
+            projectId: "elka-73bb6",
+            storageBucket: "elka-73bb6.firebasestorage.app",
+            messagingSenderId: "922263387717",
+            appId: "1:922263387717:web:f64a6703fd27b82db5ad2c",
+            measurementId: "G-K075PYBHVG"
+        };
+
+        // Initialize the modular app
+        console.log('🚀 Initializing modular app...');
+        initApp(firebaseConfig).then(app => {
+            console.log('✅ Modular app initialized successfully!');
+            console.log('📦 Available components:', Object.keys(app.components));
+            console.log('💡 Access via: window.appHandlers');
+        }).catch(error => {
+            console.error('❌ Error initializing app:', error);
+        });
+    </script>
+</body>
+</html>
+
