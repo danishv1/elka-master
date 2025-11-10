@@ -3533,7 +3533,9 @@
                                             <!-- Project Rows -->
                                             ${projects.map(project => `
                                                 <tr class="hover:bg-gray-50">
-                                                    <td class="border p-2 bg-gray-50 font-semibold text-sm sticky right-0 z-10" title="${project.name}">
+                                                    <td class="border p-2 bg-gray-50 font-semibold text-sm sticky right-0 z-10 cursor-pointer hover:bg-gray-200 transition-colors" 
+                                                        title="לחץ לצפייה בפרויקט: ${project.name}"
+                                                        onclick="state.currentView = 'projectView'; state.selectedProjectId = '${project.id}'; render();">
                                                         <div class="truncate">${project.name}</div>
                                                     </td>
                                                     ${dates.map(date => {
