@@ -71,16 +71,48 @@ export function initSettingsComponent(context) {
         
         try {
             console.log('Uploading PDF template...');
-            const storageRef = storage.ref('templates/order_template.pdf');
-            await storageRef.put(file);
-            const url = await storageRef.getDownloadURL();
-            state.pdfTemplate = url;
-            console.log('PDF template uploaded:', url);
-            alert('תבנית PDF הועלתה בהצלחה');
+            
+            // Set uploading state
+            state.uploadingPDFTemplate = true;
+            state.pdfUploadProgress = 0;
             render();
-            return url;
+            
+            const storageRef = storage.ref('templates/order_template.pdf');
+            const uploadTask = storageRef.put(file);
+            
+            // Monitor upload progress
+            uploadTask.on('state_changed', 
+                (snapshot) => {
+                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                    state.pdfUploadProgress = Math.round(progress);
+                    render();
+                    console.log('Upload progress:', state.pdfUploadProgress + '%');
+                },
+                (error) => {
+                    console.error('Upload error:', error);
+                    state.uploadingPDFTemplate = false;
+                    state.pdfUploadProgress = 0;
+                    render();
+                    alert('שגיאה בהעלאת תבנית PDF: ' + error.message);
+                },
+                async () => {
+                    // Upload completed successfully
+                    const url = await uploadTask.snapshot.ref.getDownloadURL();
+                    state.pdfTemplate = url;
+                    state.uploadingPDFTemplate = false;
+                    state.pdfUploadProgress = 0;
+                    console.log('PDF template uploaded:', url);
+                    alert('תבנית PDF הועלתה בהצלחה');
+                    render();
+                }
+            );
+            
+            return uploadTask;
         } catch (error) {
             console.error('Error uploading PDF template:', error);
+            state.uploadingPDFTemplate = false;
+            state.pdfUploadProgress = 0;
+            render();
             alert('שגיאה בהעלאת תבנית PDF: ' + error.message);
             throw error;
         }

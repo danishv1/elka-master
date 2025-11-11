@@ -3795,21 +3795,50 @@
                                     </p>
                                 </div>
                             ` : `
-                                <div class="text-center py-8">
-                                    <div class="text-6xl mb-4">📄</div>
-                                    <h3 class="text-xl font-semibold text-gray-700 mb-2">לא הועלתה תבנית PDF</h3>
-                                    <p class="text-gray-600 mb-6">
-                                        העלה קובץ PDF שישמש כתבנית רקע להזמנות רכש
-                                    </p>
-                                    <label class="cursor-pointer inline-flex items-center gap-2 bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition">
-                                        <span class="text-xl">📤</span>
-                                        <span>העלה תבנית PDF</span>
-                                        <input type="file" 
-                                            accept="application/pdf" 
-                                            class="hidden" 
-                                            onchange="window.appHandlers.settings.uploadPDFTemplate(this.files[0])"/>
-                                    </label>
-                                </div>
+                                ${state.uploadingPDFTemplate ? `
+                                    <div class="text-center py-12">
+                                        <div class="relative inline-block">
+                                            <svg class="w-32 h-32" viewBox="0 0 120 120">
+                                                <circle cx="60" cy="60" r="54" fill="none" stroke="#E5E7EB" stroke-width="8"/>
+                                                <circle cx="60" cy="60" r="54" fill="none" stroke="#3B82F6" stroke-width="8"
+                                                    stroke-dasharray="${Math.PI * 108}"
+                                                    stroke-dashoffset="${Math.PI * 108 * (1 - state.pdfUploadProgress / 100)}"
+                                                    stroke-linecap="round"
+                                                    transform="rotate(-90 60 60)"
+                                                    style="transition: stroke-dashoffset 0.3s ease"/>
+                                            </svg>
+                                            <div class="absolute inset-0 flex items-center justify-center">
+                                                <span class="text-2xl font-bold text-blue-600">${state.pdfUploadProgress}%</span>
+                                            </div>
+                                        </div>
+                                        <p class="text-gray-600 mt-4">מעלה קובץ PDF...</p>
+                                    </div>
+                                ` : `
+                                    <div class="py-8">
+                                        <!-- Drag and Drop Zone -->
+                                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center transition-all hover:border-blue-400 hover:bg-blue-50"
+                                            ondragover="event.preventDefault(); event.currentTarget.classList.add('border-blue-500', 'bg-blue-100');"
+                                            ondragleave="event.currentTarget.classList.remove('border-blue-500', 'bg-blue-100');"
+                                            ondrop="event.preventDefault(); event.currentTarget.classList.remove('border-blue-500', 'bg-blue-100'); const file = event.dataTransfer.files[0]; if(file) window.appHandlers.settings.uploadPDFTemplate(file);">
+                                            
+                                            <div class="text-6xl mb-4">📄</div>
+                                            <h3 class="text-xl font-semibold text-gray-700 mb-2">לא הועלתה תבנית PDF</h3>
+                                            <p class="text-gray-600 mb-4">
+                                                גרור ושחרר קובץ PDF כאן
+                                            </p>
+                                            <p class="text-gray-500 text-sm mb-6">או</p>
+                                            <label class="cursor-pointer inline-flex items-center gap-2 bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition">
+                                                <span class="text-xl">📤</span>
+                                                <span>בחר קובץ PDF</span>
+                                                <input type="file" 
+                                                    accept="application/pdf" 
+                                                    class="hidden" 
+                                                    onchange="window.appHandlers.settings.uploadPDFTemplate(this.files[0])"/>
+                                            </label>
+                                            <p class="text-xs text-gray-500 mt-4">קובץ PDF בלבד • עד 10MB</p>
+                                        </div>
+                                    </div>
+                                `}
                             `}
                         </div>
 
