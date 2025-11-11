@@ -168,6 +168,200 @@ export function initSettingsComponent(context) {
         loadSettings();
     }
 
+    // ===== SETTINGS VIEW RENDERING =====
+    
+    function renderSettingsView() {
+        return `
+            <div class="max-w-6xl mx-auto">
+                <h1 class="text-3xl font-bold text-gray-800 mb-6">הגדרות</h1>
+                
+                <div class="space-y-6">
+                    <!-- PDF Template Section -->
+                    <div class="bg-white rounded-lg shadow-lg p-6">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-4">תבנית PDF להזמנות</h2>
+                        <p class="text-sm text-gray-600 mb-4">
+                            העלה תבנית PDF שתשמש כרקע להזמנות. התוכן יוצב מעל התבנית.
+                        </p>
+                        
+                        ${state.pdfTemplate ? `
+                            <div class="space-y-4">
+                                <div class="p-4 bg-green-50 rounded-lg border border-green-200 flex items-center justify-between">
+                                    <div class="flex items-center gap-3">
+                                        <span class="text-3xl">✅</span>
+                                        <div>
+                                            <div class="font-semibold text-green-800">תבנית PDF הועלתה בהצלחה</div>
+                                            <div class="text-sm text-green-600">התבנית מוכנה לשימוש</div>
+                                        </div>
+                                    </div>
+                                    <button onclick="window.appHandlers.settings.removePDFTemplate()"
+                                        class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 text-sm">
+                                        🗑️ מחק תבנית
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- PDF Top Margin Setting -->
+                            <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    שולי עליון ב-PDF (נקודות):
+                                </label>
+                                <div class="flex items-center gap-3">
+                                    <input type="number" 
+                                        value="${state.pdfTopMargin || 180}" 
+                                        onchange="window.appHandlers.settings.updatePDFTopMargin(this.value)"
+                                        class="border border-gray-300 rounded px-3 py-2 w-24"
+                                        min="0"
+                                        max="500">
+                                    <span class="text-sm text-gray-600">
+                                        (ערך מומלץ: 180-200 נקודות)
+                                    </span>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-2">
+                                    קובע את המרווח מראש הדף שבו יתחיל תוכן ההזמנה
+                                </p>
+                            </div>
+                        ` : `
+                            ${state.uploadingPDFTemplate ? `
+                                <div class="text-center py-12">
+                                    <div class="relative inline-block">
+                                        <svg class="w-32 h-32" viewBox="0 0 120 120">
+                                            <circle cx="60" cy="60" r="54" fill="none" stroke="#E5E7EB" stroke-width="8"/>
+                                            <circle cx="60" cy="60" r="54" fill="none" stroke="#3B82F6" stroke-width="8"
+                                                stroke-dasharray="${Math.PI * 108}"
+                                                stroke-dashoffset="${Math.PI * 108 * (1 - state.pdfUploadProgress / 100)}"
+                                                stroke-linecap="round"
+                                                transform="rotate(-90 60 60)"
+                                                style="transition: stroke-dashoffset 0.3s ease"/>
+                                        </svg>
+                                        <div class="absolute inset-0 flex items-center justify-center">
+                                            <span class="text-2xl font-bold text-blue-600">${state.pdfUploadProgress}%</span>
+                                        </div>
+                                    </div>
+                                    <p class="text-gray-600 mt-4">מעלה קובץ PDF...</p>
+                                </div>
+                            ` : `
+                                <div class="py-8">
+                                    <!-- Drag and Drop Zone -->
+                                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center transition-all hover:border-blue-400 hover:bg-blue-50"
+                                        ondragover="event.preventDefault(); event.currentTarget.classList.add('border-blue-500', 'bg-blue-100');"
+                                        ondragleave="event.currentTarget.classList.remove('border-blue-500', 'bg-blue-100');"
+                                        ondrop="event.preventDefault(); event.currentTarget.classList.remove('border-blue-500', 'bg-blue-100'); const file = event.dataTransfer.files[0]; if(file && file.type === 'application/pdf') window.appHandlers.settings.uploadPDFTemplate(file);">
+                                        
+                                        <div class="text-6xl mb-4">📄</div>
+                                        <h3 class="text-xl font-semibold text-gray-700 mb-2">לא הועלתה תבנית PDF</h3>
+                                        <p class="text-gray-600 mb-4">
+                                            גרור ושחרר קובץ PDF כאן
+                                        </p>
+                                        <p class="text-gray-500 text-sm mb-6">או</p>
+                                        <label class="cursor-pointer inline-flex items-center gap-2 bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition">
+                                            <span class="text-xl">📤</span>
+                                            <span>בחר קובץ PDF</span>
+                                            <input type="file" 
+                                                accept="application/pdf" 
+                                                class="hidden" 
+                                                onchange="if(this.files[0]) window.appHandlers.settings.uploadPDFTemplate(this.files[0])"/>
+                                        </label>
+                                        <p class="text-xs text-gray-500 mt-4">קובץ PDF בלבד • עד 10MB</p>
+                                    </div>
+                                </div>
+                            `}
+                        `}
+                    </div>
+
+                    <!-- Worker Daily Rates Section -->
+                    <div class="bg-white rounded-lg shadow-lg p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-2xl font-bold text-gray-800">תעריפי עובדים יומיים</h2>
+                            ${state.editingWorkerRates ? `
+                                <div class="flex gap-2">
+                                    <button onclick="window.appHandlers.settings.saveAllWorkerRates()"
+                                        class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600">
+                                        💾 שמור
+                                    </button>
+                                    <button onclick="window.appHandlers.settings.toggleEditWorkerRates()"
+                                        class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600">
+                                        ✕ ביטול
+                                    </button>
+                                </div>
+                            ` : `
+                                <button onclick="window.appHandlers.settings.toggleEditWorkerRates()"
+                                    class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
+                                    ✏️ ערוך תעריפים
+                                </button>
+                            `}
+                        </div>
+                        
+                        <p class="text-sm text-gray-600 mb-4">
+                            תעריף יומי בסיסי לכל עובד. ישמש לחישוב הוצאות עובדים בפרויקטים.
+                        </p>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-right text-sm font-semibold text-gray-700">שם עובד</th>
+                                        <th class="px-6 py-3 text-right text-sm font-semibold text-gray-700">תעריף יומי (₪)</th>
+                                        <th class="px-6 py-3 text-right text-sm font-semibold text-gray-700">ימי עבודה כוללים</th>
+                                        <th class="px-6 py-3 text-right text-sm font-semibold text-gray-700">סה"כ הוצאות</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200">
+                                    ${workers.map(worker => {
+                                        const rate = state.workerDailyRates[worker.id] || 0;
+                                        const totalDays = window.appHandlers?.sidur ? 
+                                            window.appHandlers.sidur.getWorkerTotalDays(worker.id) : 0;
+                                        const totalExpenses = rate * totalDays;
+                                        
+                                        return `
+                                            <tr class="hover:bg-gray-50">
+                                                <td class="px-6 py-4 text-right">
+                                                    <div class="font-medium text-gray-800">${worker.name}</div>
+                                                    <div class="text-xs text-gray-500">ID: ${worker.id}</div>
+                                                </td>
+                                                <td class="px-6 py-4 text-right">
+                                                    ${state.editingWorkerRates ? `
+                                                        <input type="number" 
+                                                            value="${rate}" 
+                                                            onchange="state.workerDailyRates['${worker.id}'] = parseFloat(this.value) || 0; render()"
+                                                            class="border border-gray-300 rounded px-3 py-2 w-32"
+                                                            min="0"
+                                                            step="50">
+                                                    ` : `
+                                                        <span class="font-medium text-gray-800">₪${rate.toLocaleString()}</span>
+                                                    `}
+                                                </td>
+                                                <td class="px-6 py-4 text-right">
+                                                    <span class="text-gray-700">${totalDays}</span>
+                                                </td>
+                                                <td class="px-6 py-4 text-right">
+                                                    <span class="font-medium text-gray-800">₪${totalExpenses.toLocaleString()}</span>
+                                                </td>
+                                            </tr>
+                                        `;
+                                    }).join('')}
+                                </tbody>
+                                <tfoot class="bg-gray-50 font-bold">
+                                    <tr>
+                                        <td class="px-6 py-4 text-right" colspan="3">סה"כ הוצאות עובדים:</td>
+                                        <td class="px-6 py-4 text-right text-blue-600">
+                                            ₪${workers.reduce((sum, w) => {
+                                                const rate = state.workerDailyRates[w.id] || 0;
+                                                const days = window.appHandlers?.sidur ? 
+                                                    window.appHandlers.sidur.getWorkerTotalDays(w.id) : 0;
+                                                return sum + (rate * days);
+                                            }, 0).toLocaleString()}
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        `;
+    }
+
     // Return public API
     return {
         loadSettings,
@@ -177,7 +371,8 @@ export function initSettingsComponent(context) {
         updateWorkerDailyRate,
         saveAllWorkerRates,
         toggleEditWorkerRates,
-        showSettingsView
+        showSettingsView,
+        renderSettingsView
     };
 }
 

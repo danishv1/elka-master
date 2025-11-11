@@ -379,7 +379,7 @@ function renderAllProjectsView() {
 }
 
 function renderSettingsView() {
-    return '<div>Settings View - Implementation needed</div>';
+    return appInstance.components.settings.renderSettingsView();
 }
 
 // Export for use in other modules

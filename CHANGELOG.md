@@ -5,6 +5,71 @@ All notable changes to the Invoice Manager project will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.2] - 2025-11-11
+
+### Fixed
+- Fixed settings view not rendering (was showing placeholder text)
+- Fixed worker rate editing not working in settings page
+- Fixed PDF template upload not working in settings page
+- Added missing `renderSettingsView()` method to settings component
+- Connected settings component renderer to main app render function
+
+### Technical Changes
+- Implemented full settings view rendering in `settings.js` component
+- Updated `app.js` to call `appInstance.components.settings.renderSettingsView()`
+- Settings view now fully functional with all features working
+
+---
+
+## [1.3.1] - 2025-11-11
+
+### Fixed
+- Removed ability to edit worker rates from project/schedule views
+- Enforced Settings as the exclusive location for rate management
+- Removed `updateWorkerDailyRate()` from sidur component's public API
+
+### Changed
+- Worker rates now read-only in project and schedule views
+- Settings view is now the single source of truth for rate editing
+
+---
+
+## [1.3.0] - 2025-11-11
+
+### Added - Global Settings for Worker Daily Rates
+
+#### Features
+- **Global Worker Rate Management**: Centralized settings page for managing worker daily rates
+- **Settings View**: New dedicated settings section accessible from main navigation
+- **Global Rate Storage**: Worker daily rates stored in Firestore settings collection
+- **Automatic Cost Calculation**: Project worker expenses automatically calculated using global rates
+- **Rate Editor**: Toggle-based editor for updating all worker rates with save functionality
+#### Benefits
+- **Single Source of Truth**: Worker rates managed in one place instead of per-project
+- **Consistency**: All projects use the same worker rates for accurate cost calculations
+- **Easy Updates**: Update a worker's rate once and it applies to all projects
+- **No Manual Entry**: Eliminates need to manually enter costs in project view
+- **Automatic Sync**: Rates loaded from Firebase on app startup
+#### Technical Implementation
+- Worker rates stored in `settings/workerRates` Firestore document
+- Rates loaded into `state.workerDailyRates` object
+- Functions in `sidur.js` use global rates for expense calculations:
+  - `getWorkerTotalExpenses()` - Calculate total worker expenses
+  - `getProjectWorkerExpenses()` - Calculate project-specific expenses with allocation
+  - `getProjectWorkerExpensesDetailed()` - Detailed breakdown with allocations
+- Settings component provides CRUD operations for rates
+- Real-time updates across all views when rates change
+
+#### UI/UX
+- Settings accessible via navigation menu
+- Clean rate editor with worker names and input fields
+- Edit/Save toggle pattern for rate updates
+- Success/error feedback for save operations
+- Rates display with ₪ currency symbol
+- Hebrew interface for all settings
+
+---
+
 ## [1.1.0] - 2025-11-10
 
 ### Added - Sidur (Work Schedule) Enhancements

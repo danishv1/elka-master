@@ -96,25 +96,8 @@ export function initSidurComponent(context) {
         }
     }
 
-    async function updateWorkerDailyRate(workerId, rate) {
-        try {
-            const updates = { [`workerDailyRates.${workerId}`]: parseFloat(rate) || 0 };
-            
-            // Save to user's settings or a dedicated collection
-            await db.collection('settings').doc('workerRates').set(updates, { merge: true });
-            
-            // Update local state
-            if (!state.workerDailyRates) {
-                state.workerDailyRates = {};
-            }
-            state.workerDailyRates[workerId] = parseFloat(rate) || 0;
-            
-            render();
-        } catch (error) {
-            console.error('Error updating worker daily rate:', error);
-            alert('שגיאה בעדכון תעריף יומי: ' + error.message);
-        }
-    }
+    // NOTE: Worker daily rates are now managed exclusively in Settings
+    // This function has been removed - use Settings component instead
 
     async function loadWorkerDailyRates() {
         try {
@@ -282,7 +265,7 @@ export function initSidurComponent(context) {
         loadWorkAssignments,
         addWorkAssignment,
         deleteWorkAssignment,
-        updateWorkerDailyRate,
+        // updateWorkerDailyRate - REMOVED: Now managed exclusively in Settings
         loadWorkerDailyRates,
         showWorkScheduleView,
         getWorkerAssignmentsForDate,
