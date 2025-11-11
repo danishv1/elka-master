@@ -3915,16 +3915,11 @@
                                         <tr>
                                             <th class="px-6 py-3 text-right text-sm font-semibold text-gray-700">שם עובד</th>
                                             <th class="px-6 py-3 text-right text-sm font-semibold text-gray-700">תעריף יומי (₪)</th>
-                                            <th class="px-6 py-3 text-right text-sm font-semibold text-gray-700">ימי עבודה כוללים</th>
-                                            <th class="px-6 py-3 text-right text-sm font-semibold text-gray-700">סה"כ הוצאות</th>
                                         </tr>
                                     </thead>
                                     <tbody class="divide-y divide-gray-200">
                                         ${window.workers.map(worker => {
                                             const rate = state.workerDailyRates[worker.id] || 0;
-                                            const totalDays = window.appHandlers?.sidur ? 
-                                                window.appHandlers.sidur.getWorkerTotalDays(worker.id) : 0;
-                                            const totalExpenses = rate * totalDays;
                                             
                                             return `
                                                 <tr class="hover:bg-gray-50">
@@ -3944,29 +3939,10 @@
                                                             <span class="font-medium text-gray-800">₪${rate.toLocaleString()}</span>
                                                         `}
                                                     </td>
-                                                    <td class="px-6 py-4 text-right">
-                                                        <span class="text-gray-700">${totalDays}</span>
-                                                    </td>
-                                                    <td class="px-6 py-4 text-right">
-                                                        <span class="font-medium text-gray-800">₪${totalExpenses.toLocaleString()}</span>
-                                                    </td>
                                                 </tr>
                                             `;
                                         }).join('')}
                                     </tbody>
-                                    <tfoot class="bg-gray-50 font-bold">
-                                        <tr>
-                                            <td class="px-6 py-4 text-right" colspan="3">סה"כ הוצאות עובדים:</td>
-                                            <td class="px-6 py-4 text-right text-blue-600">
-                                                ₪${window.workers.reduce((sum, w) => {
-                                                    const rate = state.workerDailyRates[w.id] || 0;
-                                                    const days = window.appHandlers?.sidur ? 
-                                                        window.appHandlers.sidur.getWorkerTotalDays(w.id) : 0;
-                                                    return sum + (rate * days);
-                                                }, 0).toLocaleString()}
-                                            </td>
-                                        </tr>
-                                    </tfoot>
                                 </table>
                             </div>
                         </div>
