@@ -2,7 +2,9 @@
 // Handles all application settings and configuration
 
 export function initSettingsComponent(context) {
+    console.log('🔧 Initializing settings component...', context);
     const { state, db, firebase, storage, render, updateHistory, workers } = context;
+    console.log('Settings component - workers:', workers);
 
     // ===== SETTINGS FUNCTIONS =====
 
@@ -326,17 +328,17 @@ export function initSettingsComponent(context) {
                             <h2 class="text-2xl font-bold text-gray-800">תעריפי עובדים יומיים</h2>
                             ${state.editingWorkerRates ? `
                                 <div class="flex gap-2">
-                                    <button onclick="window.appHandlers.settings.saveAllWorkerRates()"
+                                    <button onclick="event.preventDefault(); window.appHandlers.settings.saveAllWorkerRates(); return false;"
                                         class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600">
                                         💾 שמור
                                     </button>
-                                    <button onclick="window.appHandlers.settings.toggleEditWorkerRates()"
+                                    <button onclick="event.preventDefault(); window.appHandlers.settings.toggleEditWorkerRates(); return false;"
                                         class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600">
                                         ✕ ביטול
                                     </button>
                                 </div>
                             ` : `
-                                <button onclick="window.appHandlers.settings.toggleEditWorkerRates()"
+                                <button onclick="event.preventDefault(); console.log('Edit button clicked!', window.appHandlers); window.appHandlers.settings.toggleEditWorkerRates(); return false;"
                                     class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
                                     ✏️ ערוך תעריפים
                                 </button>
@@ -415,7 +417,7 @@ export function initSettingsComponent(context) {
     }
 
     // Return public API
-    return {
+    const api = {
         loadSettings,
         uploadPDFTemplate,
         removePDFTemplate,
@@ -426,5 +428,7 @@ export function initSettingsComponent(context) {
         showSettingsView,
         renderSettingsView
     };
+    console.log('✅ Settings component initialized, API:', Object.keys(api));
+    return api;
 }
 

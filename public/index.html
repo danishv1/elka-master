@@ -106,7 +106,7 @@
     
     <!-- Version Info Footer -->
     <div class="fixed bottom-2 left-2 text-xs text-gray-400 bg-white/50 backdrop-blur-sm px-2 py-1 rounded">
-        v1.3.3 | settings-fix 🔧
+        v1.3.4 | settings-fix 🔧
     </div>
 
     <script>
@@ -3724,6 +3724,12 @@
         }
 
         function renderSettingsView() {
+            // Use modular component if available
+            if (window.appHandlers && window.appHandlers.settings && window.appHandlers.settings.renderSettingsView) {
+                return window.appHandlers.settings.renderSettingsView();
+            }
+            
+            // Fallback to inline rendering
             return `
                 <div class="max-w-7xl mx-auto p-6">
                     <div class="flex justify-between items-center mb-8">
