@@ -58,77 +58,26 @@ export function initSettingsComponent(context) {
         }
     }
 
-    function uploadPDFTemplate(file) {
-        if (!file) {
-            alert('לא נבחר קובץ');
-            return;
-        }
+    async function uploadPDFTemplate(file) {
+        if (!file) return;
         
-        if (file.type !== 'application/pdf') {
-            alert('יש להעלות קובץ PDF בלבד');
-            return;
-        }
+        console.log('Uploading:', file.name);
         
-        if (!state.user) {
-            alert('יש להתחבר למערכת כדי להעלות קבצים');
-            return;
-        }
+        // Upload to Firebase Storage
+        const storageRef = storage.ref('templates/order_template.pdf');
+        await storageRef.put(file);
         
-        try {
-            console.log('Uploading PDF template...', file.name, file.size, 'bytes');
-            
-            // Set uploading state
-            state.uploadingPDFTemplate = true;
-            state.pdfUploadProgress = 0;
-            render();
-            
-            const storageRef = storage.ref('templates/order_template.pdf');
-            const uploadTask = storageRef.put(file);
-            
-            // Monitor upload progress
-            uploadTask.on('state_changed', 
-                (snapshot) => {
-                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                    state.pdfUploadProgress = Math.round(progress);
-                    render();
-                    console.log('Upload progress:', state.pdfUploadProgress + '%', snapshot.bytesTransferred, '/', snapshot.totalBytes);
-                },
-                (error) => {
-                    console.error('Upload error:', error);
-                    state.uploadingPDFTemplate = false;
-                    state.pdfUploadProgress = 0;
-                    render();
-                    alert('שגיאה בהעלאת תבנית PDF: ' + error.message);
-                },
-                () => {
-                    // Upload completed successfully
-                    console.log('Upload completed, getting download URL...');
-                    uploadTask.snapshot.ref.getDownloadURL().then((url) => {
-                        state.pdfTemplate = url;
-                        state.uploadingPDFTemplate = false;
-                        state.pdfUploadProgress = 0;
-                        console.log('PDF template uploaded successfully:', url);
-                        alert('תבנית PDF הועלתה בהצלחה');
-                        render();
-                    }).catch((error) => {
-                        console.error('Error getting download URL:', error);
-                        state.uploadingPDFTemplate = false;
-                        state.pdfUploadProgress = 0;
-                        render();
-                        alert('שגיאה בקבלת URL: ' + error.message);
-                    });
-                }
-            );
-            
-            return uploadTask;
-        } catch (error) {
-            console.error('Error starting upload:', error);
-            state.uploadingPDFTemplate = false;
-            state.pdfUploadProgress = 0;
-            render();
-            alert('שגיאה בהעלאת תבנית PDF: ' + error.message);
-            throw error;
-        }
+        // Get URL
+        const url = await storageRef.getDownloadURL();
+        
+        // Save to Firestore
+        await db.collection('settings').doc('pdfTemplate').set({ url });
+        
+        // Update state
+        state.pdfTemplate = url;
+        render();
+        
+        alert('הועלה בהצלחה!');
     }
 
     async function removePDFTemplate() {
