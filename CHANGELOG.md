@@ -5,6 +5,24 @@ All notable changes to the Invoice Manager project will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.3] - 2025-11-11
+
+### Fixed
+- Fixed edit button for worker rates not toggling edit mode
+- Fixed state being reset when loadSettings() is called
+- Preserved editing state across settings reloads
+- Added comprehensive PDF upload validation (type, size)
+- Added upload progress tracking with visual indicator
+- Improved error handling for PDF uploads
+
+### Improved
+- Added console logging for debugging toggle state
+- Better file validation before upload
+- Real-time progress updates during PDF upload
+- Success/error messages in Hebrew
+
+---
+
 ## [1.3.2] - 2025-11-11
 
 ### Fixed

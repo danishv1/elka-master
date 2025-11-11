@@ -15,6 +15,9 @@ export function initSettingsComponent(context) {
         try {
             console.log('Loading settings...');
             
+            // Preserve editing state
+            const wasEditing = state.editingWorkerRates;
+            
             // Load PDF template URL
             try {
                 const storageRef = storage.ref('templates/order_template.pdf');
@@ -48,6 +51,9 @@ export function initSettingsComponent(context) {
                 }
             }
             
+            // Restore editing state
+            state.editingWorkerRates = wasEditing;
+            
             console.log('Settings loaded successfully');
             render();
         } catch (error) {
@@ -59,25 +65,70 @@ export function initSettingsComponent(context) {
     }
 
     async function uploadPDFTemplate(file) {
-        if (!file) return;
+        if (!file) {
+            console.log('No file provided');
+            return;
+        }
         
-        console.log('Uploading:', file.name);
+        if (file.type !== 'application/pdf') {
+            alert('יש להעלות קובץ PDF בלבד');
+            return;
+        }
         
-        // Upload to Firebase Storage
-        const storageRef = storage.ref('templates/order_template.pdf');
-        await storageRef.put(file);
+        if (file.size > 10 * 1024 * 1024) { // 10MB limit
+            alert('גודל הקובץ חורג מ-10MB');
+            return;
+        }
         
-        // Get URL
-        const url = await storageRef.getDownloadURL();
-        
-        // Save to Firestore
-        await db.collection('settings').doc('pdfTemplate').set({ url });
-        
-        // Update state
-        state.pdfTemplate = url;
-        render();
-        
-        alert('הועלה בהצלחה!');
+        try {
+            console.log('Uploading PDF:', file.name, 'Size:', file.size);
+            
+            state.uploadingPDFTemplate = true;
+            state.pdfUploadProgress = 0;
+            render();
+            
+            // Upload to Firebase Storage
+            const storageRef = storage.ref('templates/order_template.pdf');
+            const uploadTask = storageRef.put(file);
+            
+            // Monitor upload progress
+            uploadTask.on('state_changed', 
+                (snapshot) => {
+                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                    state.pdfUploadProgress = Math.round(progress);
+                    console.log('Upload progress:', state.pdfUploadProgress + '%');
+                    render();
+                },
+                (error) => {
+                    console.error('Upload error:', error);
+                    state.uploadingPDFTemplate = false;
+                    render();
+                    alert('שגיאה בהעלאת קובץ: ' + error.message);
+                },
+                async () => {
+                    // Upload completed successfully
+                    console.log('Upload completed');
+                    const url = await storageRef.getDownloadURL();
+                    
+                    // Save to Firestore
+                    await db.collection('settings').doc('pdfTemplate').set({ url });
+                    
+                    // Update state
+                    state.pdfTemplate = url;
+                    state.uploadingPDFTemplate = false;
+                    state.pdfUploadProgress = 0;
+                    
+                    render();
+                    alert('תבנית PDF הועלתה בהצלחה! ✅');
+                }
+            );
+        } catch (error) {
+            console.error('Error uploading PDF template:', error);
+            state.uploadingPDFTemplate = false;
+            state.pdfUploadProgress = 0;
+            render();
+            alert('שגיאה בהעלאת תבנית PDF: ' + error.message);
+        }
     }
 
     async function removePDFTemplate() {
@@ -157,6 +208,7 @@ export function initSettingsComponent(context) {
 
     function toggleEditWorkerRates() {
         state.editingWorkerRates = !state.editingWorkerRates;
+        console.log('Toggle worker rates editing:', state.editingWorkerRates);
         render();
     }
 
