@@ -1,7 +1,11 @@
 // ===== SHARED STATE =====
 // Centralized application state
+// Version: 1.2.0
+// Branch: feat-general-settings-stats-3ir4X
 
 export const initialState = {
+    appVersion: '1.2.0',
+    appBranch: 'feat-general-settings-stats-3ir4X',
     clients: [],
     projects: [],
     allProjects: [], // All projects across all clients with full data
@@ -70,6 +74,8 @@ export const initialState = {
     pendingOCRFile: null,
     pdfTemplate: null, // URL to uploaded PDF template
     pdfTopMargin: 180, // Configurable top margin for PDF template (in points)
+    uploadingPDFTemplate: false, // PDF template upload in progress
+    pdfUploadProgress: 0, // PDF upload progress percentage (0-100)
     loadingSuppliers: false,
     loadingOrders: false,
     suppliersLoaded: false,
