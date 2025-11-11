@@ -5,6 +5,31 @@ All notable changes to the Invoice Manager project will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.5] - 2025-11-11
+
+### Fixed
+- Removed worker rate editing from project view
+- Worker rates now completely read-only in project view
+- Added helpful link to Settings for editing rates
+- Enforced Settings as the ONLY place to edit worker rates
+
+### Changed
+- Project view now shows informational message about rate management
+- Replaced edit button with link to Settings page
+- Improved UX by guiding users to the correct location for rate editing
+
+---
+
+## [1.3.4] - 2025-11-11
+
+### Fixed
+- Fixed modular components initialization by exposing global variables
+- Exposed `window.db`, `window.storage`, `window.auth`, `window.state` etc.
+- Settings component now properly initializes
+- Edit worker rates button in Settings now works
+
+---
+
 ## [1.3.3] - 2025-11-11
 
 ### Fixed

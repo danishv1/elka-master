@@ -40,8 +40,19 @@
         // Initialize components after Firebase and state are ready
         window.addEventListener('DOMContentLoaded', () => {
             // Wait for Firebase and state to initialize
+            let initAttempts = 0;
+            const maxAttempts = 50; // 5 seconds max
+            
             const initModules = () => {
+                initAttempts++;
+                
+                console.log(`🔄 Init attempt ${initAttempts}: db=${!!window.db}, state=${!!window.state}, render=${!!window.render}`);
+                
                 if (!window.db || !window.state || !window.render) {
+                    if (initAttempts >= maxAttempts) {
+                        console.error('❌ Failed to initialize modular components after 5 seconds');
+                        return;
+                    }
                     console.log('⏳ Waiting for app to initialize...');
                     setTimeout(initModules, 100);
                     return;
@@ -49,46 +60,62 @@
                 
                 console.log('🔥 Initializing modular components...');
                 
-                const context = {
-                    state: window.state,
-                    db: window.db,
-                    firebase: window.firebase,
-                    storage: window.storage,
-                    auth: window.auth,
-                    isDevelopment: window.isDevelopment,
-                    categories: window.categories,
-                    projectStatuses: window.projectStatuses,
-                    workers: window.workers,
-                    calculateTotals: window.calculateTotals,
-                    render: window.render,
-                    updateHistory: window.updateHistory
-                };
+                try {
+                    const context = {
+                        state: window.state,
+                        db: window.db,
+                        firebase: window.firebase,
+                        storage: window.storage,
+                        auth: window.auth,
+                        isDevelopment: window.isDevelopment,
+                        categories: window.categories,
+                        projectStatuses: window.projectStatuses,
+                        workers: window.workers,
+                        calculateTotals: window.calculateTotals,
+                        render: window.render,
+                        updateHistory: window.updateHistory
+                    };
 
-                // Initialize all components
-                const clientsComponent = initClientsComponent(context);
-                const projectsComponent = initProjectsComponent(context);
-                const suppliersComponent = initSuppliersComponent(context);
-                const ordersComponent = initOrdersComponent(context);
-                const sidurComponent = initSidurComponent(context);
-                const settingsComponent = initSettingsComponent(context);
+                    console.log('📋 Context ready:', Object.keys(context));
 
-                // Add cross-component dependencies
-                context.loadProjectsForClient = projectsComponent.loadProjectsForClient;
-                context.loadAllProjects = projectsComponent.loadAllProjects;
+                    // Initialize all components
+                    console.log('Initializing clients...');
+                    const clientsComponent = initClientsComponent(context);
+                    console.log('Initializing projects...');
+                    const projectsComponent = initProjectsComponent(context);
+                    console.log('Initializing suppliers...');
+                    const suppliersComponent = initSuppliersComponent(context);
+                    console.log('Initializing orders...');
+                    const ordersComponent = initOrdersComponent(context);
+                    console.log('Initializing sidur...');
+                    const sidurComponent = initSidurComponent(context);
+                    console.log('Initializing settings...');
+                    const settingsComponent = initSettingsComponent(context);
 
-                // Expose globally for use in inline onclick handlers
-                window.appHandlers = {
-                    clients: clientsComponent,
-                    projects: projectsComponent,
-                    suppliers: suppliersComponent,
-                    orders: ordersComponent,
-                    sidur: sidurComponent,
-                    settings: settingsComponent
-                };
+                    // Add cross-component dependencies
+                    context.loadProjectsForClient = projectsComponent.loadProjectsForClient;
+                    context.loadAllProjects = projectsComponent.loadAllProjects;
 
-                console.log('✅ Modular components initialized!');
-                console.log('📦 Available components:', Object.keys(window.appHandlers));
-                console.log('💡 Example: window.appHandlers.clients.loadClients()');
+                    // Expose globally for use in inline onclick handlers
+                    window.appHandlers = window.appHandlers || {};
+                    Object.assign(window.appHandlers, {
+                        clients: clientsComponent,
+                        projects: projectsComponent,
+                        suppliers: suppliersComponent,
+                        orders: ordersComponent,
+                        sidur: sidurComponent,
+                        settings: settingsComponent
+                    });
+
+                    console.log('✅ Modular components initialized!');
+                    console.log('📦 Available components:', Object.keys(window.appHandlers));
+                    console.log('🔧 Settings component:', window.appHandlers.settings ? 'LOADED' : 'MISSING');
+                    if (window.appHandlers.settings) {
+                        console.log('🔧 Settings methods:', Object.keys(window.appHandlers.settings));
+                    }
+                } catch (error) {
+                    console.error('❌ Error initializing modular components:', error);
+                }
             };
             
             initModules();
@@ -106,7 +133,7 @@
     
     <!-- Version Info Footer -->
     <div class="fixed bottom-2 left-2 text-xs text-gray-400 bg-white/50 backdrop-blur-sm px-2 py-1 rounded">
-        v1.3.4 | settings-fix 🔧
+        v1.3.5 | settings-fix 🔧
     </div>
 
     <script>
@@ -126,9 +153,16 @@
         const db = firebase.firestore();
         const storage = firebase.storage();
         const auth = firebase.auth();
+        
+        // Expose globally for modular components
+        window.db = db;
+        window.storage = storage;
+        window.auth = auth;
+        window.firebase = firebase;
 
         // Development mode - set to false for production
         const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        window.isDevelopment = isDevelopment;
         
         // Comment out emulator usage for now - just use production for testing
         // To enable emulators later (requires Java), uncomment below:
@@ -164,7 +198,7 @@
         console.log('Development mode:', isDevelopment);
 
         // Categories
-        const categories = [
+        const categories = window.categories = [
             'בטון ומוצריו',
             'כבלים',
             'כלים כבדים',
@@ -177,7 +211,7 @@
         ];
 
         // State
-        let state = {
+        let state = window.state = {
             clients: [],
             projects: [],
             allProjects: [], // All projects across all clients with full data
@@ -263,7 +297,7 @@
         };
 
         // Project statuses
-        const projectStatuses = ['פתוח', 'אומדן', 'הזמנה', 'בביצוע', 'חשבון', 'לתשלום', 'שולם'];
+        const projectStatuses = window.projectStatuses = ['פתוח', 'אומדן', 'הזמנה', 'בביצוע', 'חשבון', 'לתשלום', 'שולם'];
         
         // Workers (hardcoded for now)
         const workers = [
@@ -4349,36 +4383,8 @@
                 });
             });
             
-            // Daily rates editing section
-            if (state.editingWorkerRates) {
-                return `
-                    <div class="mb-4 p-4 bg-blue-50 rounded-lg border-2 border-blue-300">
-                        <h4 class="font-bold mb-3">ערוך תעריפים יומיים</h4>
-                        ${window.workers.map(w => `
-                            <div class="flex items-center justify-between p-2 mb-2 bg-white rounded border">
-                                <span class="font-medium">${w.name}</span>
-                                <div class="flex items-center gap-2">
-                                    <span class="text-sm text-gray-600">₪</span>
-                                    <input type="number" value="${state.workerDailyRates[w.id]}" 
-                                        onchange="state.workerDailyRates['${w.id}'] = parseInt(this.value) || 0; render()"
-                                        class="w-24 p-1 border rounded text-center" step="10"/>
-                                    <span class="text-sm text-gray-600">ליום</span>
-                                </div>
-                            </div>
-                        `).join('')}
-                        <div class="flex gap-2 mt-3">
-                            <button onclick="state.editingWorkerRates = false; render()" 
-                                class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-                                שמור
-                            </button>
-                            <button onclick="state.editingWorkerRates = false; render()" 
-                                class="flex-1 bg-gray-400 text-white px-4 py-2 rounded-lg hover:bg-gray-500">
-                                ביטול
-                            </button>
-                        </div>
-                    </div>
-                `;
-            }
+            // Worker rates are now managed exclusively in Settings
+            // No editing allowed from project view
             
             if (Object.keys(workerDays).length === 0) {
                 return `
@@ -4432,12 +4438,18 @@
                         }).join('')}
                     </div>
                     
-                    <!-- Edit Rates Button -->
-                    <button onclick="state.editingWorkerRates = true; render()" 
-                        class="w-full bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 flex items-center justify-center gap-2">
-                        <span>⚙️</span>
-                        <span>ערוך תעריפים יומיים</span>
-                    </button>
+                    <!-- Link to Settings (rates are read-only here) -->
+                    <div class="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                        <p class="text-sm text-gray-600 mb-2">
+                            💡 תעריפי עובדים מנוהלים בהגדרות המערכת
+                        </p>
+                        <a href="#" onclick="showSettingsView(); return false;" 
+                            class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 text-sm font-medium">
+                            <span>⚙️</span>
+                            <span>עבור להגדרות לעריכת תעריפים</span>
+                            <span>←</span>
+                        </a>
+                    </div>
                 </div>
             `;
         }
