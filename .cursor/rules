@@ -12,6 +12,39 @@ This is an Invoice Management System for construction/contracting business with 
 - **Views**: Optional view renderers in `public/js/views/`
 - **Main coordinator**: `public/js/app.js` initializes and coordinates all components
 
+### ⚠️ CRITICAL: index.html Best Practices - Apply Intelligently
+
+**Purpose of index.html:**
+- UI structure and layout only
+- Navigation elements
+- Rendering and DOM manipulation
+- Event listener bindings
+
+**❌ AVOID in index.html:**
+- Business logic (should be in component files)
+- Data processing functions (should be in components or utils)
+- Firebase operations (should be in components)
+- Complex calculations (should be in utils or components)
+- Feature-specific code (should be in respective component files)
+
+**✅ ALLOWED in index.html:**
+- HTML structure and Tailwind classes
+- Basic navigation and view switching
+- Calling component functions
+- Render functions that build UI from state
+- Event handlers that delegate to component functions
+
+**Apply Intelligently:**
+When modifying code, ask: "Does this belong in a component file instead?"
+- If it's client-specific logic → `components/clients.js`
+- If it's order processing → `components/orders.js`
+- If it's project calculations → `components/projects.js`
+- If it's a shared utility → `shared/utils.js`
+- If it's just rendering UI → index.html is OK
+
+**Goal: Prevent monolithic app**
+Keep index.html lean and focused. Business logic belongs in modular components.
+
 ### Component Pattern
 ```javascript
 // Each component should follow this pattern:
@@ -30,6 +63,8 @@ export function initComponentName(context) {
 ```
 
 ### When Adding Features
+**⚠️ ALWAYS add business logic to component files, NOT index.html**
+
 - **Client features** → `components/clients.js`
 - **Project/invoice features** → `components/projects.js`
 - **Order features** → `components/orders.js`
@@ -38,6 +73,9 @@ export function initComponentName(context) {
 - **Shared constants** (categories, statuses, workers) → `shared/constants.js`
 - **Helper functions** → `shared/utils.js`
 - **State management** → `shared/state.js`
+- **UI/Rendering/Navigation only** → `index.html`
+
+**Rule of Thumb:** If it processes data or contains business logic, it belongs in a component file!
 
 ## Firebase/Firestore Patterns
 
@@ -308,12 +346,43 @@ Each component should have a header comment:
 ## Common Patterns
 
 ### Adding a New Feature
-1. Identify the correct component file
+1. Identify the correct component file (NOT index.html unless it's pure UI)
 2. Add the function to that component
 3. Export it in the return statement
 4. Update state if needed
 5. Call render() if UI changes
 6. Add tests for the new feature
+
+### ❌ ANTI-PATTERN: Adding Logic to index.html
+```javascript
+// BAD: Business logic in index.html
+async function calculateProjectProfit(projectId) {
+    const project = await db.collection('projects').doc(projectId).get();
+    const orders = await db.collection('orders').where('projectId', '==', projectId).get();
+    // ... complex calculations ...
+    return profit;
+}
+```
+
+### ✅ CORRECT PATTERN: Logic in Component Files
+```javascript
+// GOOD: Business logic in components/projects.js
+export function initProjectsComponent(context) {
+    const { db, state } = context;
+    
+    async function calculateProjectProfit(projectId) {
+        const project = await db.collection('projects').doc(projectId).get();
+        const orders = await db.collection('orders').where('projectId', '==', projectId).get();
+        // ... complex calculations ...
+        return profit;
+    }
+    
+    return { calculateProjectProfit };
+}
+
+// index.html just calls the component function:
+const profit = await appHandlers.projects.calculateProjectProfit(projectId);
+```
 
 ### Deleting Records
 Always consider cascading deletes:
@@ -464,6 +533,9 @@ if (context.isDevelopment) {
 - Add helper functions → `shared/utils.js`
 - Modify state structure → `shared/state.js`
 - App initialization → `app.js`
+- **UI/Rendering/Navigation ONLY** → `index.html`
+
+**⚠️ Remember: Business logic goes in components, NOT index.html!**
 
 ### Common Commands
 - Test: `npm test`
@@ -519,6 +591,8 @@ firebase deploy
 
 Remember: 
 - This is a modular system designed to avoid merge conflicts. Keep features in their respective component files!
+- Business logic belongs in components, NOT in index.html (Apply Intelligently)
+- index.html is for UI, rendering, and navigation only
 - NEVER commit directly to main branch
 - ALWAYS wait for user approval before merging to main
 - Footer must show version and branch name
