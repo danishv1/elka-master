@@ -328,6 +328,14 @@ function updateHistory() {
         url = `/?client=${state.selectedClient.id}`;
     } else if (state.selectedProject) {
         url = `/?client=${state.selectedClient.id}&project=${state.selectedProject.id}`;
+    } else if (state.view === 'suppliers') {
+        url = '/suppliers';
+    } else if (state.view === 'orders') {
+        url = '/orders';
+    } else if (state.view === 'workSchedule') {
+        url = '/work-schedule';
+    } else if (state.view === 'settings') {
+        url = '/settings';
     } else if (state.view !== 'clients') {
         url = `/?view=${state.view}`;
     }

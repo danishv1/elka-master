@@ -226,8 +226,22 @@ export function initSettingsComponent(context) {
     
     function renderSettingsView() {
         return `
-            <div class="max-w-6xl mx-auto">
-                <h1 class="text-3xl font-bold text-gray-800 mb-6">הגדרות</h1>
+            <div class="max-w-7xl mx-auto p-6">
+                <div class="flex justify-between items-center mb-8">
+                    <h1 class="text-4xl font-bold text-gray-800">
+                        הגדרות
+                    </h1>
+                    <div class="flex items-center gap-4">
+                        <span class="text-sm text-gray-600">שלום, ${state.user.displayName || state.user.email}</span>
+                        <button onclick="signOut()" 
+                            class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">
+                            התנתק
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Navigation Tabs -->
+                ${renderNavigationTabs('settings')}
                 
                 <div class="space-y-6">
                     <!-- PDF Template Section -->
@@ -247,10 +261,16 @@ export function initSettingsComponent(context) {
                                             <div class="text-sm text-green-600">התבנית מוכנה לשימוש</div>
                                         </div>
                                     </div>
-                                    <button onclick="window.appHandlers.settings.removePDFTemplate()"
-                                        class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 text-sm">
-                                        🗑️ מחק תבנית
-                                    </button>
+                                    <div class="flex gap-2">
+                                        <button onclick="window.open('${state.pdfTemplate}', '_blank')"
+                                            class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 text-sm">
+                                            👁️ צפה בתבנית
+                                        </button>
+                                        <button onclick="window.appHandlers.settings.removePDFTemplate()"
+                                            class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 text-sm">
+                                            🗑️ מחק תבנית
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                             
