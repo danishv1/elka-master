@@ -5,6 +5,22 @@ All notable changes to the Invoice Manager project will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.11] - 2025-11-13
+
+### Fixed
+- **CRITICAL FIX**: Fixed blank PDF by making temp element visible on-screen
+- Changed temp element from off-screen (`left: -9999px`) to centered modal overlay
+- html2canvas now properly captures visible elements
+- Added dark backdrop during PDF generation for better UX
+- Increased font loading wait time from 500ms to 1000ms
+
+### Changed
+- Temp element now positioned as centered modal (fixed, z-index 9999)
+- Added backdrop overlay to prevent interaction during generation
+- Improved cleanup to remove both element and backdrop
+
+---
+
 ## [2.1.10] - 2025-11-13
 
 ### Added

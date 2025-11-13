@@ -607,24 +607,46 @@ export function initOrdersComponent(context) {
             console.log('✅ html2pdf library loaded');
 
             // Clean up any existing temp elements first
-            const existingTemps = document.querySelectorAll('.pdf-temp-element');
+            const existingTemps = document.querySelectorAll('.pdf-temp-element, .pdf-backdrop');
             existingTemps.forEach(el => el.remove());
             console.log('✅ Cleaned up', existingTemps.length, 'existing temp elements');
 
-            // Create temporary element
+            // Create backdrop to block interaction during PDF generation
+            const backdrop = document.createElement('div');
+            backdrop.className = 'pdf-backdrop';
+            backdrop.style.position = 'fixed';
+            backdrop.style.top = '0';
+            backdrop.style.left = '0';
+            backdrop.style.width = '100vw';
+            backdrop.style.height = '100vh';
+            backdrop.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+            backdrop.style.zIndex = '9998';
+            backdrop.style.display = 'flex';
+            backdrop.style.alignItems = 'center';
+            backdrop.style.justifyContent = 'center';
+            document.body.appendChild(backdrop);
+
+            // Create temporary element ON SCREEN (html2canvas needs visible elements)
             const element = document.createElement('div');
             element.className = 'pdf-temp-element';
-            element.style.position = 'absolute';
-            element.style.left = '-9999px';
-            element.style.top = '0';
+            element.style.position = 'fixed';
+            element.style.top = '50%';
+            element.style.left = '50%';
+            element.style.transform = 'translate(-50%, -50%)';
+            element.style.width = '210mm'; // A4 width
+            element.style.backgroundColor = 'white';
+            element.style.zIndex = '9999';
+            element.style.boxShadow = '0 0 20px rgba(0,0,0,0.3)';
+            element.style.maxHeight = '90vh';
+            element.style.overflow = 'auto';
             element.innerHTML = htmlContent;
             document.body.appendChild(element);
-            console.log('✅ Temp element created and appended');
+            console.log('✅ Temp element created and appended ON SCREEN');
             console.log('✅ Element children count:', element.children.length);
 
-            // Wait for fonts to load
+            // Wait longer for fonts to load (increased from 500ms to 1000ms)
             console.log('⏳ Waiting for fonts to load...');
-            await new Promise(resolve => setTimeout(resolve, 500));
+            await new Promise(resolve => setTimeout(resolve, 1000));
             console.log('✅ Font wait complete');
 
             // Generate PDF
@@ -641,13 +663,17 @@ export function initOrdersComponent(context) {
             await html2pdf().set(opt).from(element).save();
             console.log('✅ html2pdf conversion complete');
 
-            // Clean up
+            // Clean up - remove both element and backdrop
             setTimeout(() => {
                 if (element.parentNode) {
                     element.parentNode.removeChild(element);
                 }
+                if (backdrop.parentNode) {
+                    backdrop.parentNode.removeChild(backdrop);
+                }
+                console.log('✅ Cleanup complete');
             }, 100);
-            
+
             console.log('✅ HTML PDF generated successfully');
 
         } catch (error) {
