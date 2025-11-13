@@ -67,51 +67,13 @@ export async function loadHebrewBoldFont() {
 
 /**
  * Reverse Hebrew text for RTL display while preserving numbers and punctuation
+ * DISABLED: Just returns text as-is for testing
  */
 export function reverseHebrewText(text) {
     if (!text) return '';
     
-    const segments = [];
-    let currentSegment = '';
-    let currentType = null;
-
-    for (let i = 0; i < text.length; i++) {
-        const char = text[i];
-        const charCode = char.charCodeAt(0);
-        let charType;
-        
-        if ((charCode >= 0x0590 && charCode <= 0x05FF) || 
-            (charCode >= 0xFB1D && charCode <= 0xFB4F)) {
-            charType = 'hebrew';
-        } else if (char >= '0' && char <= '9') {
-            charType = 'number';
-        } else {
-            charType = 'other';
-        }
-
-        if (currentType !== null && currentType !== charType) {
-            segments.push({ text: currentSegment, type: currentType });
-            currentSegment = char;
-            currentType = charType;
-        } else {
-            currentSegment += char;
-            currentType = charType;
-        }
-    }
-
-    if (currentSegment) {
-        segments.push({ text: currentSegment, type: currentType });
-    }
-
-    segments.reverse();
-    const result = segments.map(seg => {
-        if (seg.type === 'hebrew') {
-            return seg.text.split('').reverse().join('');
-        }
-        return seg.text;
-    }).join('');
-
-    return result;
+    // Return text as-is without any reversal (for testing)
+    return text;
 }
 
 /**
