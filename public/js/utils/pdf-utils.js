@@ -16,18 +16,20 @@ export async function loadHebrewFont() {
 
     try {
         console.log('Fetching Hebrew font (Rubik Regular)...');
-        // Try multiple font URLs in order of preference
+        // Try multiple font URLs with different versions and sources
         const fontUrls = [
+            'https://github.com/google/fonts/raw/main/ofl/rubik/Rubik-Regular.ttf',
             'https://fonts.gstatic.com/s/rubik/v29/iJWZBXyIfDnIV5PNhY1KTN7Z-Yh-B4iFWUU.ttf',
             'https://fonts.gstatic.com/s/rubik/v30/iJWZBXyIfDnIV5PNhY1KTN7Z-Yh-B4iFWUU.ttf',
-            'https://github.com/google/fonts/raw/main/ofl/rubik/Rubik-Regular.ttf'
+            'https://fonts.gstatic.com/s/rubik/v31/iJWZBXyIfDnIV5PNhY1KTN7Z-Yh-B4iFWUU.ttf',
+            'https://fonts.gstatic.com/s/rubik/v32/iJWZBXyIfDnIV5PNhY1KTN7Z-Yh-B4iFWUU.ttf'
         ];
         
         let lastError;
         for (const fontUrl of fontUrls) {
             try {
                 console.log(`Trying font URL: ${fontUrl}`);
-                const response = await fetch(fontUrl);
+                const response = await fetch(fontUrl, { mode: 'cors' });
                 if (response.ok) {
                     hebrewFontBytes = await response.arrayBuffer();
                     console.log('Hebrew font (Regular) loaded successfully from:', fontUrl);
@@ -56,18 +58,20 @@ export async function loadHebrewBoldFont() {
 
     try {
         console.log('Fetching Hebrew Bold font (Rubik Bold)...');
-        // Try multiple font URLs in order of preference
+        // Try multiple font URLs with different versions and sources
         const fontUrls = [
+            'https://github.com/google/fonts/raw/main/ofl/rubik/Rubik-Bold.ttf',
             'https://fonts.gstatic.com/s/rubik/v29/iJWZBXyIfDnIV5PNhY1KTN7Z-Yh-NYiFWUUxJI0.ttf',
             'https://fonts.gstatic.com/s/rubik/v30/iJWZBXyIfDnIV5PNhY1KTN7Z-Yh-NYiFWUUxJI0.ttf',
-            'https://github.com/google/fonts/raw/main/ofl/rubik/Rubik-Bold.ttf'
+            'https://fonts.gstatic.com/s/rubik/v31/iJWZBXyIfDnIV5PNhY1KTN7Z-Yh-NYiFWUUxJI0.ttf',
+            'https://fonts.gstatic.com/s/rubik/v32/iJWZBXyIfDnIV5PNhY1KTN7Z-Yh-NYiFWUUxJI0.ttf'
         ];
         
         let lastError;
         for (const fontUrl of fontUrls) {
             try {
                 console.log(`Trying font URL: ${fontUrl}`);
-                const response = await fetch(fontUrl);
+                const response = await fetch(fontUrl, { mode: 'cors' });
                 if (response.ok) {
                     hebrewBoldFontBytes = await response.arrayBuffer();
                     console.log('Hebrew font (Bold) loaded successfully from:', fontUrl);
