@@ -30,6 +30,9 @@
     <!-- fontkit for custom font embedding in pdf-lib -->
     <script src="https://unpkg.com/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
     
+    <!-- html2pdf.js for HTML to PDF conversion -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
     <!-- Google Fonts - Noto Sans Hebrew for PDF -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -208,7 +211,7 @@
         console.log('Development mode:', isDevelopment);
 
         // Version and branch info
-        const APP_VERSION = '1.8.0';
+        const APP_VERSION = '2.0.0';
         const BRANCH_NAME = 'fix/order-pdf-generation';
         
         // Categories
@@ -4611,9 +4614,9 @@
                                 </div>
                             </div>
                             <div class="flex gap-2">
-                                <button onclick="window.appHandlers.orders.generateOrderPDF('${order.id}')" 
+                                <button onclick="window.appHandlers.orders.generateOrderPDFHTML('${order.id}')" 
                                     class="text-blue-600 hover:text-blue-700 text-sm px-2 py-1 border border-blue-600 rounded">
-                                    📄 הורד PDF
+                                    📄 הורד PDF (HTML)
                                 </button>
                             </div>
                         </div>
@@ -4935,9 +4938,9 @@
                                                     <td class="p-3">₪${order.totalSum.toFixed(2)}</td>
                                                     <td class="p-3">${order.createdAt?.toDate ? new Date(order.createdAt.toDate()).toLocaleDateString('he-IL') : 'N/A'}</td>
                                                     <td class="p-3">
-                                                        <button onclick="window.appHandlers.orders.generateOrderPDF('${order.id}')" 
+                                                        <button onclick="window.appHandlers.orders.generateOrderPDFHTML('${order.id}')" 
                                                             class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-sm mr-2">
-                                                            📄 PDF
+                                                            📄 PDF (HTML)
                                                         </button>
                                                         <button onclick="deleteOrder('${order.id}')" 
                                                             class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm">
@@ -4981,8 +4984,8 @@
                                                         <td class="p-2 text-sm">₪${order.totalSum.toFixed(2)}</td>
                                                         <td class="p-2 text-sm">${order.createdAt?.toDate ? new Date(order.createdAt.toDate()).toLocaleDateString('he-IL') : 'N/A'}</td>
                                                         <td class="p-2">
-                                                            <button onclick="window.appHandlers.orders.generateOrderPDF('${order.id}')" 
-                                                                class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 text-xs mr-1">
+                                                            <button onclick="window.appHandlers.orders.generateOrderPDFHTML('${order.id}')" 
+                                                                class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 text-xs mr-1" title="PDF (HTML)">
                                                                 📄
                                                             </button>
                                                             <button onclick="deleteOrder('${order.id}')" 

@@ -350,9 +350,136 @@ export function initOrdersComponent(context) {
 
     // ===== PDF GENERATION =====
 
+    // NEW: HTML-based PDF generation using html2pdf.js
+    async function generateOrderPDFHTML(orderId) {
+        try {
+            const order = state.orders.find(o => o.id === orderId);
+            if (!order) {
+                alert('הזמנה לא נמצאה');
+                return;
+            }
 
-    // Restructured to match required format
+            const supplier = state.suppliers.find(s => s.id === order.supplierId);
+            const orderDateObj = order.orderDate ? new Date(order.orderDate) : new Date();
+            const orderDate = `${String(orderDateObj.getDate()).padStart(2, '0')}/${String(orderDateObj.getMonth() + 1).padStart(2, '0')}/${orderDateObj.getFullYear()}`;
 
+            // Create HTML content
+            const htmlContent = `
+                <div style="direction: rtl; font-family: 'Noto Sans Hebrew', sans-serif; padding: 3cm 1.5cm 2cm 1.5cm; font-size: 12px;">
+                    <!-- Header -->
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 30px;">
+                        <div style="font-size: 11px;">${orderDate}</div>
+                        <div style="font-size: 16px; font-weight: bold;">הזמנת רכש מס' ${order.orderNumber}</div>
+                    </div>
+                    
+                    <!-- Supplier Box -->
+                    <div style="border: 1px solid black; padding: 8px; margin-bottom: 5px;">
+                        <div style="display: flex; justify-content: space-between;">
+                            <div>תנאי תשלום: ${order.paymentTerms || 'שוטף +30'}</div>
+                            <div><strong>שם הספק:</strong> ${order.supplierName || 'ספק'}</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Contact Box -->
+                    <div style="border: 1px solid black; padding: 8px; margin-bottom: 25px;">
+                        <div style="display: flex; justify-content: space-between;">
+                            <div>דוא״ל: ${supplier?.email || ''}</div>
+                            <div><strong>איש קשר:</strong> ${supplier?.contactName || ''}</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Project -->
+                    <div style="font-size: 14px; font-weight: bold; margin-bottom: 20px; text-align: right;">
+                        פרויקט: ${order.projectName || 'פרויקט'}
+                    </div>
+                    
+                    <!-- Table -->
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 10px;">
+                        <thead>
+                            <tr style="background: #e5e5e5; font-weight: bold;">
+                                <th style="border: 1px solid black; padding: 8px; text-align: right;">מ"ס</th>
+                                <th style="border: 1px solid black; padding: 8px; text-align: right;">תיאור פריט</th>
+                                <th style="border: 1px solid black; padding: 8px; text-align: right;">יח'</th>
+                                <th style="border: 1px solid black; padding: 8px; text-align: right;">כמות</th>
+                                <th style="border: 1px solid black; padding: 8px; text-align: right;">מחיר</th>
+                                <th style="border: 1px solid black; padding: 8px; text-align: right;">סה"כ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${order.items.map((item, index) => `
+                                <tr>
+                                    <td style="border: 1px solid black; padding: 6px; text-align: right;">${index + 1}</td>
+                                    <td style="border: 1px solid black; padding: 6px; text-align: right;">${item.description || ''}</td>
+                                    <td style="border: 1px solid black; padding: 6px; text-align: right;">${item.unit || 'יח\''}</td>
+                                    <td style="border: 1px solid black; padding: 6px; text-align: right;">${item.quantity || 1}</td>
+                                    <td style="border: 1px solid black; padding: 6px; text-align: right;">${formatNumber(item.price || 0)}</td>
+                                    <td style="border: 1px solid black; padding: 6px; text-align: right;">${formatNumber(item.sum || 0)}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                    
+                    <!-- Total Sum -->
+                    <div style="margin-bottom: 40px;">
+                        <div style="border: 1px solid black; padding: 8px; display: inline-block; float: left;">
+                            <strong>סה"כ:</strong> ₪${formatNumber(order.totalSum || 0)}
+                        </div>
+                        <div style="clear: both;"></div>
+                    </div>
+                    
+                    ${order.comments ? `
+                    <!-- Comments -->
+                    <div style="margin-bottom: 20px; text-align: right;">
+                        <div style="font-weight: bold; margin-bottom: 5px;">הערות:</div>
+                        <div style="font-size: 10px;">${order.comments}</div>
+                    </div>
+                    ` : ''}
+                    
+                    ${order.deliveryAddress ? `
+                    <!-- Address -->
+                    <div style="margin-bottom: 20px; text-align: right;">
+                        <div style="font-weight: bold; margin-bottom: 5px;">כתובת משלוח:</div>
+                        <div style="font-size: 10px;">${order.deliveryAddress}</div>
+                    </div>
+                    ` : ''}
+                    
+                    ${order.orderedBy ? `
+                    <!-- Orderer -->
+                    <div style="text-align: right;">
+                        <strong>מזמין:</strong> ${order.orderedBy}
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+
+            // Create temporary element
+            const element = document.createElement('div');
+            element.innerHTML = htmlContent;
+            document.body.appendChild(element);
+
+            // Generate PDF
+            const opt = {
+                margin: 0,
+                filename: `Order_${order.orderNumber.replace('/', '-')}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            await html2pdf().set(opt).from(element).save();
+
+            // Clean up
+            document.body.removeChild(element);
+            
+            console.log('✅ HTML PDF generated successfully');
+
+        } catch (error) {
+            console.error('❌ Error generating HTML PDF:', error);
+            alert('שגיאה ביצירת PDF: ' + error.message);
+        }
+    }
+
+    // OLD: pdf-lib based generation (kept for fallback)
     async function generateOrderPDF(orderId) {
         try {
             const order = state.orders.find(o => o.id === orderId);
@@ -824,7 +951,8 @@ export function initOrdersComponent(context) {
         updateEditingOrderItem,
         addEditingOrderItem,
         removeEditingOrderItem,
-        generateOrderPDF
+        generateOrderPDF,
+        generateOrderPDFHTML  // NEW: HTML-based PDF generation
     };
 }
 
