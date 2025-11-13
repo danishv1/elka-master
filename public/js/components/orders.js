@@ -8,7 +8,7 @@ import {
     formatNumber, 
     wrapText,
     pdfColors 
-} from '../utils/pdf-utils.js?v=2.0';
+} from '../utils/pdf-utils.js?v=2.1';
 
 export function initOrdersComponent(context) {
     const { state, db, firebase, render, updateHistory } = context;

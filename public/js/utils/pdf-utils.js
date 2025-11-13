@@ -6,7 +6,8 @@ let hebrewFontBytes = null;
 let hebrewBoldFontBytes = null;
 
 /**
- * Load Hebrew Regular font (Rubik)
+ * Load Hebrew Regular font (Noto Sans Hebrew)
+ * Fetches from Google Fonts CSS API which returns the actual font URL
  */
 export async function loadHebrewFont() {
     if (hebrewFontBytes) {
@@ -16,29 +17,30 @@ export async function loadHebrewFont() {
 
     try {
         console.log('Fetching Hebrew font (Noto Sans Hebrew Regular)...');
-        // Use Noto Sans Hebrew which has better CORS support and Hebrew coverage
-        const fontUrls = [
-            'https://github.com/google/fonts/raw/main/ofl/notosanshebrew/NotoSansHebrew-Regular.ttf',
-            'https://fonts.gstatic.com/s/notosanshebrew/v43/or3HQ7v33eiDljA1IufXTtVf7V6RvEEdhQlk0LlGxCyaeNKYZC0sqk3xXGiXd4utoiJltutR2g.ttf',
-            'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/notosanshebrew/NotoSansHebrew-Regular.ttf'
-        ];
         
-        let lastError;
-        for (const fontUrl of fontUrls) {
-            try {
-                console.log(`Trying font URL: ${fontUrl}`);
-                const response = await fetch(fontUrl, { mode: 'cors' });
-                if (response.ok) {
-                    hebrewFontBytes = await response.arrayBuffer();
-                    console.log('Hebrew font (Regular) loaded successfully from:', fontUrl);
-                    return hebrewFontBytes;
-                }
-            } catch (err) {
-                lastError = err;
-                console.warn(`Failed to load from ${fontUrl}:`, err);
+        // Fetch the CSS file from Google Fonts
+        const cssUrl = 'https://fonts.googleapis.com/css2?family=Noto+Sans+Hebrew:wght@400&display=swap';
+        const cssResponse = await fetch(cssUrl);
+        const cssText = await cssResponse.text();
+        
+        // Extract the font URL from the CSS using regex
+        // Look for url(...) in the @font-face rule
+        const fontUrlMatch = cssText.match(/url\(([^)]+)\)/);
+        
+        if (fontUrlMatch && fontUrlMatch[1]) {
+            const fontUrl = fontUrlMatch[1].replace(/['"]/g, ''); // Remove quotes
+            console.log('Found font URL from Google Fonts CSS:', fontUrl);
+            
+            // Fetch the actual font file
+            const fontResponse = await fetch(fontUrl);
+            if (fontResponse.ok) {
+                hebrewFontBytes = await fontResponse.arrayBuffer();
+                console.log('Hebrew font (Regular) loaded successfully');
+                return hebrewFontBytes;
             }
         }
-        throw lastError || new Error('Failed to fetch Hebrew font from all sources');
+        
+        throw new Error('Failed to extract or fetch Hebrew font from Google Fonts');
     } catch (error) {
         console.error('Error loading Hebrew font:', error);
         throw error;
@@ -46,7 +48,8 @@ export async function loadHebrewFont() {
 }
 
 /**
- * Load Hebrew Bold font (Rubik Bold)
+ * Load Hebrew Bold font (Noto Sans Hebrew Bold)
+ * Fetches from Google Fonts CSS API which returns the actual font URL
  */
 export async function loadHebrewBoldFont() {
     if (hebrewBoldFontBytes) {
@@ -56,29 +59,30 @@ export async function loadHebrewBoldFont() {
 
     try {
         console.log('Fetching Hebrew Bold font (Noto Sans Hebrew Bold)...');
-        // Use Noto Sans Hebrew which has better CORS support and Hebrew coverage
-        const fontUrls = [
-            'https://github.com/google/fonts/raw/main/ofl/notosanshebrew/NotoSansHebrew-Bold.ttf',
-            'https://fonts.gstatic.com/s/notosanshebrew/v43/or3HQ7v33eiDljA1IufXTtVf7V6RvEEdhQlk0LlGxCyaeNKYZC0sqk3xXGiXd4uEpyJltutR2g.ttf',
-            'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/notosanshebrew/NotoSansHebrew-Bold.ttf'
-        ];
         
-        let lastError;
-        for (const fontUrl of fontUrls) {
-            try {
-                console.log(`Trying font URL: ${fontUrl}`);
-                const response = await fetch(fontUrl, { mode: 'cors' });
-                if (response.ok) {
-                    hebrewBoldFontBytes = await response.arrayBuffer();
-                    console.log('Hebrew font (Bold) loaded successfully from:', fontUrl);
-                    return hebrewBoldFontBytes;
-                }
-            } catch (err) {
-                lastError = err;
-                console.warn(`Failed to load from ${fontUrl}:`, err);
+        // Fetch the CSS file from Google Fonts
+        const cssUrl = 'https://fonts.googleapis.com/css2?family=Noto+Sans+Hebrew:wght@700&display=swap';
+        const cssResponse = await fetch(cssUrl);
+        const cssText = await cssResponse.text();
+        
+        // Extract the font URL from the CSS using regex
+        // Look for url(...) in the @font-face rule
+        const fontUrlMatch = cssText.match(/url\(([^)]+)\)/);
+        
+        if (fontUrlMatch && fontUrlMatch[1]) {
+            const fontUrl = fontUrlMatch[1].replace(/['"]/g, ''); // Remove quotes
+            console.log('Found font URL from Google Fonts CSS:', fontUrl);
+            
+            // Fetch the actual font file
+            const fontResponse = await fetch(fontUrl);
+            if (fontResponse.ok) {
+                hebrewBoldFontBytes = await fontResponse.arrayBuffer();
+                console.log('Hebrew font (Bold) loaded successfully');
+                return hebrewBoldFontBytes;
             }
         }
-        throw lastError || new Error('Failed to fetch Hebrew Bold font from all sources');
+        
+        throw new Error('Failed to extract or fetch Hebrew Bold font from Google Fonts');
     } catch (error) {
         console.error('Error loading Hebrew Bold font:', error);
         throw error;
