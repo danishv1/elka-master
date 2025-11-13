@@ -460,31 +460,35 @@ export function initOrdersComponent(context) {
                 color: black
             });
 
-            // Payment conditions (left) - CRITICAL: draw Hebrew and number separately
-            const paymentLabel = reverseHebrewText('תנאי תשלום: ');
-            const paymentTerms = order.paymentTerms || 'שוטף +30';
+            // Payment conditions (left) - CRITICAL: RTL positioning
+            // Final display should be: "שוטף +30 :תנאי תשלום" (reading right to left)
+            // Which in LTR positioning is: label on right, then number, then Hebrew
             
-            // Split payment terms into Hebrew part and number part
-            // For "שוטף +30", we need: "שוטף +" (Hebrew) and "30" (number)
+            const paymentLabel = reverseHebrewText('תנאי תשלום: ');
             const paymentHebrewPart = reverseHebrewText('שוטף +');
             const paymentNumberPart = '30';
             
-            const paymentHebrewWidth = font.widthOfTextAtSize(paymentHebrewPart, 10);
-            const paymentNumberWidth = font.widthOfTextAtSize(paymentNumberPart, 10);
             const paymentLabelWidth = font.widthOfTextAtSize(paymentLabel, 10);
+            const paymentNumberWidth = font.widthOfTextAtSize(paymentNumberPart, 10);
+            const paymentHebrewWidth = font.widthOfTextAtSize(paymentHebrewPart, 10);
             
-            // Draw in order: Hebrew part, number part, then label
+            // Calculate total width
+            const totalWidth = paymentLabelWidth + paymentNumberWidth + paymentHebrewWidth;
+            
+            // Start from right and work leftward
             let paymentX = marginSide + 10;
             
-            page.drawText(paymentHebrewPart, {
+            // Draw label first (rightmost in visual RTL)
+            page.drawText(paymentLabel, {
                 x: paymentX,
                 y: y - 17,
                 size: 10,
                 font,
                 color: black
             });
-            paymentX += paymentHebrewWidth;
+            paymentX += paymentLabelWidth;
             
+            // Draw number in middle
             page.drawText(paymentNumberPart, {
                 x: paymentX,
                 y: y - 17,
@@ -494,7 +498,8 @@ export function initOrdersComponent(context) {
             });
             paymentX += paymentNumberWidth;
             
-            page.drawText(paymentLabel, {
+            // Draw Hebrew part last (leftmost in visual RTL)
+            page.drawText(paymentHebrewPart, {
                 x: paymentX,
                 y: y - 17,
                 size: 10,
