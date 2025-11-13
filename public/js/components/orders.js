@@ -381,11 +381,13 @@ export function initOrdersComponent(context) {
                         body { 
                             font-family: 'Noto Sans Hebrew', Arial, sans-serif; 
                             direction: rtl;
-                            padding: 35mm 20mm 10mm 20mm;
+                            padding: 10px;
                             margin: 0;
                             font-size: 12px;
                             line-height: 1.6;
                             box-sizing: border-box;
+                            max-width: 100%;
+                            overflow: hidden;
                         }
                         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
                         .header-title { 
@@ -553,7 +555,7 @@ export function initOrdersComponent(context) {
 
             // Generate PDF
             const opt = {
-                margin: [10, 10, 10, 10], // [top, left, bottom, right] in mm
+                margin: [45, 30, 20, 30], // [top, left, bottom, right] in mm - 4.5cm top, 3cm sides, 2cm bottom
                 filename: `Order_${order.orderNumber.replace('/', '-')}.pdf`,
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2, useCORS: true },
