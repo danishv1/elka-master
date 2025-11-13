@@ -480,22 +480,22 @@ export function initOrdersComponent(context) {
                     </div>
                     
                     <div class="info-box">
-                        <div class="info-cell"><strong>שם הספק:</strong> ${preserveSpaces(order.supplierName || 'ספק')}</div>
-                        <div class="info-cell"><strong>תנאי תשלום:</strong> &#x202B;${preserveSpaces(order.paymentTerms || 'שוטף +30')}&#x202C;</div>
+                        <div class="info-cell"><strong>${preserveSpaces('שם הספק')}:</strong> ${preserveSpaces(order.supplierName || 'ספק')}</div>
+                        <div class="info-cell"><strong>${preserveSpaces('תנאי תשלום')}:</strong> &#x202B;${preserveSpaces(order.paymentTerms || 'שוטף +30')}&#x202C;</div>
                     </div>
                     
                     <div class="info-box">
-                        <div class="info-cell"><strong>איש קשר:</strong> ${preserveSpaces(supplier?.contactName || '')}</div>
+                        <div class="info-cell"><strong>${preserveSpaces('איש קשר')}:</strong> ${preserveSpaces(supplier?.contactName || '')}</div>
                         <div class="info-cell"><strong>דוא״ל:</strong> ${supplier?.email || ''}</div>
                     </div>
                     
-                    <div class="project">&#x202B;פרויקט: ${preserveSpaces(order.projectName || 'פרויקט')}&#x202C;</div>
+                    <div class="project">&#x202B;${preserveSpaces('פרויקט')}: ${preserveSpaces(order.projectName || 'פרויקט')}&#x202C;</div>
                     
                     <table>
                         <thead>
                             <tr>
                                 <th>מ״ס</th>
-                                <th>תיאור פריט</th>
+                                <th>${preserveSpaces('תיאור פריט')}</th>
                                 <th>יח׳</th>
                                 <th>כמות</th>
                                 <th>מחיר</th>
@@ -517,7 +517,7 @@ export function initOrdersComponent(context) {
                     </table>
                     
                     <div class="total-box">
-                        <strong>סה״כ:</strong> ₪${formatNumber(order.totalSum || 0)}
+                        <strong>סה״כ:</strong>&nbsp;₪${formatNumber(order.totalSum || 0)}
                     </div>
                     <div class="clear"></div>
                     
@@ -530,14 +530,14 @@ export function initOrdersComponent(context) {
                     
                     ${order.deliveryAddress ? `
                     <div class="section">
-                        <div class="section-title">כתובת משלוח:</div>
+                        <div class="section-title">${preserveSpaces('כתובת משלוח')}:</div>
                         <div class="section-content">&#x202B;${preserveSpaces(order.deliveryAddress)}&#x202C;</div>
                     </div>
                     ` : ''}
                     
                     ${order.orderedBy ? `
                     <div class="section">
-                        <strong>מזמין:</strong> &#x202B;${preserveSpaces(order.orderedBy)}&#x202C;
+                        <strong>מזמין:</strong>&nbsp;&#x202B;${preserveSpaces(order.orderedBy)}&#x202C;
                     </div>
                     ` : ''}
                 </body>
