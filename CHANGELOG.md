@@ -5,6 +5,16 @@ All notable changes to the Invoice Manager project will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.9] - 2025-11-13
+
+### Fixed
+- **CRITICAL FIX**: Resolved blank PDF generation issue
+- Fixed formatNumber() function calls in HTML template
+- Numbers now properly formatted before HTML generation instead of during
+- PDF generation now works correctly with proper number formatting
+
+---
+
 ## [1.3.5] - 2025-11-11
 
 ### Fixed

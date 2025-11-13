@@ -369,6 +369,20 @@ export function initOrdersComponent(context) {
                 return text.replace(/ /g, '&nbsp;');
             };
 
+            // Helper function to format numbers with thousand separators
+            const formatNumberLocal = (num) => {
+                if (typeof num !== 'number' || isNaN(num)) return '0.00';
+                return num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            };
+
+            // Pre-format all numbers before building HTML
+            const formattedItems = order.items.map(item => ({
+                ...item,
+                formattedPrice: formatNumberLocal(parseFloat(item.price) || 0),
+                formattedSum: formatNumberLocal(parseFloat(item.sum) || 0)
+            }));
+            const formattedTotal = formatNumberLocal(parseFloat(order.totalSum) || 0);
+
             // Create HTML content with proper RTL and Unicode direction marks
             const htmlContent = `
                 <!DOCTYPE html>
@@ -532,21 +546,21 @@ export function initOrdersComponent(context) {
                             </tr>
                         </thead>
                         <tbody>
-                            ${order.items.map((item, index) => `
+                            ${formattedItems.map((item, index) => `
                                 <tr>
                                     <td>${index + 1}</td>
                                     <td>&#x202B;${preserveSpaces(item.description || '')}&#x202C;</td>
                                     <td>${preserveSpaces(item.unit || 'יח׳')}</td>
                                     <td>${item.quantity || 1}</td>
-                                    <td>${formatNumber(item.price || 0)}</td>
-                                    <td>${formatNumber(item.sum || 0)}</td>
+                                    <td>${item.formattedPrice}</td>
+                                    <td>${item.formattedSum}</td>
                                 </tr>
                             `).join('')}
                         </tbody>
                     </table>
                     
                     <div class="total-box">
-                        <strong>&nbsp;סה״כ&nbsp;</strong>&nbsp;₪${formatNumber(order.totalSum || 0)}
+                        <strong>&nbsp;סה״כ&nbsp;</strong>&nbsp;₪${formattedTotal}
                     </div>
                     <div class="clear"></div>
                     
