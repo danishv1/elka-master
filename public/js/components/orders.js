@@ -4,11 +4,12 @@
 import { 
     loadHebrewFont, 
     loadHebrewBoldFont, 
-    reverseHebrewText, 
+    reverseHebrewText,
+    splitHebrewAndNumbers,
     formatNumber, 
     wrapText,
     pdfColors 
-} from '../utils/pdf-utils.js?v=3.1.0';
+} from '../utils/pdf-utils.js?v=3.2.0';
 
 export function initOrdersComponent(context) {
     const { state, db, firebase, render, updateHistory } = context;
@@ -394,10 +395,10 @@ export function initOrdersComponent(context) {
             const orderDate = `${String(orderDateObj.getDate()).padStart(2, '0')}/${String(orderDateObj.getMonth() + 1).padStart(2, '0')}/${orderDateObj.getFullYear()}`;
 
             // ===== HEADER: Order Number + "הזמנת רכש מס'" + Date =====
-            // Fix: Draw number first, then Hebrew text to prevent number reversal
+            // RAW text without reversal
             const orderNumberWidth = boldFont.widthOfTextAtSize(order.orderNumber, 14);
             const spaceWidth = boldFont.widthOfTextAtSize(' ', 14);
-            const headerLabel = reverseHebrewText('הזמנת רכש מס\'');
+            const headerLabel = 'הזמנת רכש מס\'';
             const headerLabelWidth = boldFont.widthOfTextAtSize(headerLabel, 14);
             
             // Draw order number first (not reversed, LTR)
@@ -450,7 +451,7 @@ export function initOrdersComponent(context) {
 
             // Supplier name (right-aligned)
             const supplierName = order.supplierName || 'ספק';
-            const supplierText = reverseHebrewText('שם הספק: ') + supplierName;
+            const supplierText = 'שם הספק: ' + supplierName;
             const supplierTextWidth = boldFont.widthOfTextAtSize(supplierText, 10);
             page.drawText(supplierText, {
                 x: width - marginSide - 10 - supplierTextWidth,
@@ -460,12 +461,9 @@ export function initOrdersComponent(context) {
                 color: black
             });
 
-            // Payment conditions (left) - RTL: תנאי תשלום: שוטף +30
-            // For RTL display, we need to position from RIGHT to LEFT
-            // Calculate all widths first, then position from right
-            
-            const paymentLabel = reverseHebrewText('תנאי תשלום: ');
-            const paymentHebrewPart = reverseHebrewText('שוטף ');
+            // Payment conditions (left) - RAW text
+            const paymentLabel = 'תנאי תשלום: ';
+            const paymentHebrewPart = 'שוטף ';
             const paymentPlusPart = '+';
             const paymentNumberPart = '30';
             
@@ -537,7 +535,7 @@ export function initOrdersComponent(context) {
             // Contact person (right-aligned)
             const contactPerson = supplier?.contactName || '';
             if (contactPerson) {
-                const contactText = reverseHebrewText('איש קשר: ') + contactPerson;
+                const contactText = 'איש קשר: ' + contactPerson;
                 const contactTextWidth = font.widthOfTextAtSize(contactText, 10);
                 page.drawText(contactText, {
                     x: width - marginSide - 10 - contactTextWidth,
@@ -551,7 +549,7 @@ export function initOrdersComponent(context) {
             // Email (left) - Hebrew label
             const email = supplier?.email || '';
             if (email) {
-                const emailLabel = reverseHebrewText('דוא״ל: ');
+                const emailLabel = 'דוא״ל: ';
                 const emailLabelWidth = font.widthOfTextAtSize(emailLabel, 10);
                 
                 page.drawText(emailLabel, {
@@ -575,7 +573,7 @@ export function initOrdersComponent(context) {
 
             // ===== PROJECT LINE ===== (right-aligned, bold, larger)
             const projectName = order.projectName || 'פרויקט';
-            const projectText = reverseHebrewText('פרויקט: ') + projectName;
+            const projectText = 'פרויקט: ' + projectName;
             const projectTextWidth = boldFont.widthOfTextAtSize(projectText, 14);
             page.drawText(projectText, {
                 x: width - marginSide - 10 - projectTextWidth,
@@ -611,23 +609,23 @@ export function initOrdersComponent(context) {
             const colPrice = marginSide + 80;               // מחיר
             const colTotal = marginSide + 5;                // Leftmost - סה"כ
 
-            // Column headers (RTL order: Serial → Description → Unit → Qty → Price → Total)
-            const serialHeaderWidth = boldFont.widthOfTextAtSize(reverseHebrewText('מ"ס'), 10);
-            page.drawText(reverseHebrewText('מ"ס'), { x: colSerial - serialHeaderWidth, y: tableTop - 17, size: 10, font: boldFont, color: black });
+            // Column headers - RAW text
+            const serialHeaderWidth = boldFont.widthOfTextAtSize('מ"ס', 10);
+            page.drawText('מ"ס', { x: colSerial - serialHeaderWidth, y: tableTop - 17, size: 10, font: boldFont, color: black });
             
-            const descHeaderWidth = boldFont.widthOfTextAtSize(reverseHebrewText('תיאור פריט'), 10);
-            page.drawText(reverseHebrewText('תיאור פריט'), { x: colDesc - descHeaderWidth, y: tableTop - 17, size: 10, font: boldFont, color: black });
+            const descHeaderWidth = boldFont.widthOfTextAtSize('תיאור פריט', 10);
+            page.drawText('תיאור פריט', { x: colDesc - descHeaderWidth, y: tableTop - 17, size: 10, font: boldFont, color: black });
             
-            const unitHeaderWidth = boldFont.widthOfTextAtSize(reverseHebrewText('יח\''), 10);
-            page.drawText(reverseHebrewText('יח\''), { x: colUnit - unitHeaderWidth, y: tableTop - 17, size: 10, font: boldFont, color: black });
+            const unitHeaderWidth = boldFont.widthOfTextAtSize('יח\'', 10);
+            page.drawText('יח\'', { x: colUnit - unitHeaderWidth, y: tableTop - 17, size: 10, font: boldFont, color: black });
             
-            const qtyHeaderWidth = boldFont.widthOfTextAtSize(reverseHebrewText('כמות'), 10);
-            page.drawText(reverseHebrewText('כמות'), { x: colQty - qtyHeaderWidth, y: tableTop - 17, size: 10, font: boldFont, color: black });
+            const qtyHeaderWidth = boldFont.widthOfTextAtSize('כמות', 10);
+            page.drawText('כמות', { x: colQty - qtyHeaderWidth, y: tableTop - 17, size: 10, font: boldFont, color: black });
             
-            const priceHeaderWidth = boldFont.widthOfTextAtSize(reverseHebrewText('מחיר'), 10);
-            page.drawText(reverseHebrewText('מחיר'), { x: colPrice - priceHeaderWidth, y: tableTop - 17, size: 10, font: boldFont, color: black });
+            const priceHeaderWidth = boldFont.widthOfTextAtSize('מחיר', 10);
+            page.drawText('מחיר', { x: colPrice - priceHeaderWidth, y: tableTop - 17, size: 10, font: boldFont, color: black });
             
-            page.drawText(reverseHebrewText('סה"כ'), { x: colTotal, y: tableTop - 17, size: 10, font: boldFont, color: black });
+            page.drawText('סה"כ', { x: colTotal, y: tableTop - 17, size: 10, font: boldFont, color: black });
 
             y = tableTop - headerHeight;
 
@@ -656,15 +654,18 @@ export function initOrdersComponent(context) {
                 const serialWidth = font.widthOfTextAtSize(serialText, 9);
                 page.drawText(serialText, { x: colSerial - serialWidth, y: y + 5, size: 9, font, color: black });
                 
-                // Description (right-aligned)
+                // Description (right-aligned) - handle mixed Hebrew+numbers
                 const desc = item.description || '';
-                const maxDescLength = 35;
-                const descText = reverseHebrewText(desc.substring(0, maxDescLength));
-                const descWidth = font.widthOfTextAtSize(descText, 9);
-                page.drawText(descText, { x: colDesc - descWidth, y: y + 5, size: 9, font, color: black });
+                const maxDescLength = 70;
+                const truncatedDesc = desc.substring(0, maxDescLength);
                 
-                // Unit (right-aligned)
-                const unitText = reverseHebrewText(item.unit || 'יח\'');
+                // For now, draw as-is without reverseHebrewText to prevent number reversal
+                // The Hebrew font will handle RTL automatically
+                const descWidth = font.widthOfTextAtSize(truncatedDesc, 9);
+                page.drawText(truncatedDesc, { x: colDesc - descWidth, y: y + 5, size: 9, font, color: black });
+                
+                // Unit (right-aligned) - RAW text
+                const unitText = item.unit || 'יח\'';
                 const unitWidth = font.widthOfTextAtSize(unitText, 9);
                 page.drawText(unitText, { x: colUnit - unitWidth, y: y + 5, size: 9, font, color: black });
                 
@@ -696,8 +697,8 @@ export function initOrdersComponent(context) {
                 borderWidth: 1
             });
 
-            // "סה"כ" on the right side of box
-            const sumLabelText = reverseHebrewText('סה"כ:');
+            // "סה"כ" on the right side of box - RAW text
+            const sumLabelText = 'סה"כ:';
             const sumLabelWidth = boldFont.widthOfTextAtSize(sumLabelText, 11);
             page.drawText(sumLabelText, {
                 x: sumBoxX + sumBoxWidth - 10 - sumLabelWidth,
@@ -719,9 +720,9 @@ export function initOrdersComponent(context) {
 
             y -= 60;
 
-            // ===== COMMENTS ===== (right-aligned)
+            // ===== COMMENTS ===== (right-aligned) - RAW text
             if (order.comments) {
-                const commentsLabelText = reverseHebrewText('הערות:');
+                const commentsLabelText = 'הערות:';
                 const commentsLabelWidth = boldFont.widthOfTextAtSize(commentsLabelText, 10);
                 page.drawText(commentsLabelText, {
                     x: width - marginSide - 10 - commentsLabelWidth,
@@ -734,9 +735,8 @@ export function initOrdersComponent(context) {
                 
                 const commentLines = wrapText(order.comments, width - 2 * marginSide - 20, font, 9);
                 for (const line of commentLines) {
-                    const lineText = reverseHebrewText(line);
-                    const lineWidth = font.widthOfTextAtSize(lineText, 9);
-                    page.drawText(lineText, {
+                    const lineWidth = font.widthOfTextAtSize(line, 9);
+                    page.drawText(line, {
                         x: width - marginSide - 10 - lineWidth,
                         y,
                         size: 9,
@@ -748,9 +748,9 @@ export function initOrdersComponent(context) {
                 y -= 10;
             }
 
-            // ===== ADDRESS ===== (right-aligned)
+            // ===== ADDRESS ===== (right-aligned) - RAW text
             if (order.deliveryAddress) {
-                const addressLabelText = reverseHebrewText('כתובת משלוח:');
+                const addressLabelText = 'כתובת משלוח:';
                 const addressLabelWidth = boldFont.widthOfTextAtSize(addressLabelText, 10);
                 page.drawText(addressLabelText, {
                     x: width - marginSide - 10 - addressLabelWidth,
@@ -761,9 +761,8 @@ export function initOrdersComponent(context) {
                 });
                 y -= 15;
                 
-                const addressText = reverseHebrewText(order.deliveryAddress);
-                const addressWidth = font.widthOfTextAtSize(addressText, 9);
-                page.drawText(addressText, {
+                const addressWidth = font.widthOfTextAtSize(order.deliveryAddress, 9);
+                page.drawText(order.deliveryAddress, {
                     x: width - marginSide - 10 - addressWidth,
                     y,
                     size: 9,
@@ -773,9 +772,9 @@ export function initOrdersComponent(context) {
                 y -= 20;
             }
 
-            // ===== ORDERING PERSON (מזמין) ===== (right-aligned)
+            // ===== ORDERING PERSON (מזמין) ===== (right-aligned) - RAW text
             if (order.orderedBy) {
-                const ordererText = reverseHebrewText('מזמין: ') + order.orderedBy;
+                const ordererText = 'מזמין: ' + order.orderedBy;
                 const ordererWidth = boldFont.widthOfTextAtSize(ordererText, 10);
                 page.drawText(ordererText, {
                     x: width - marginSide - 10 - ordererWidth,
