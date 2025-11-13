@@ -5,6 +5,19 @@ All notable changes to the Invoice Manager project will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.10] - 2025-11-13
+
+### Added
+- Comprehensive debug logging for PDF generation to identify issues
+- html2pdf library availability check
+- Font loading wait time (500ms) before PDF generation
+- Detailed console logging at each step of PDF process
+
+### Changed
+- Enhanced error handling with specific error messages
+
+---
+
 ## [2.1.9] - 2025-11-13
 
 ### Fixed

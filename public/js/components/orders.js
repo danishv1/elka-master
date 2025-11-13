@@ -353,13 +353,18 @@ export function initOrdersComponent(context) {
     // NEW: HTML-based PDF generation using html2pdf.js
     async function generateOrderPDFHTML(orderId) {
         try {
+            console.log('🔍 Starting PDF generation for order:', orderId);
+
             const order = state.orders.find(o => o.id === orderId);
             if (!order) {
+                console.error('❌ Order not found:', orderId);
                 alert('הזמנה לא נמצאה');
                 return;
             }
+            console.log('✅ Order found:', order);
 
             const supplier = state.suppliers.find(s => s.id === order.supplierId);
+            console.log('✅ Supplier:', supplier);
             const orderDateObj = order.orderDate ? new Date(order.orderDate) : new Date();
             const orderDate = `${String(orderDateObj.getDate()).padStart(2, '0')}/${String(orderDateObj.getMonth() + 1).padStart(2, '0')}/${orderDateObj.getFullYear()}`;
 
@@ -589,9 +594,22 @@ export function initOrdersComponent(context) {
                 </html>
             `;
 
+            console.log('✅ HTML content length:', htmlContent.length);
+            console.log('✅ Formatted items count:', formattedItems.length);
+            console.log('✅ Sample formatted item:', formattedItems[0]);
+
+            // Check if html2pdf is available
+            if (typeof html2pdf === 'undefined') {
+                console.error('❌ html2pdf library not loaded!');
+                alert('שגיאה: ספריית PDF לא נטענה. אנא רענן את הדף.');
+                return;
+            }
+            console.log('✅ html2pdf library loaded');
+
             // Clean up any existing temp elements first
             const existingTemps = document.querySelectorAll('.pdf-temp-element');
             existingTemps.forEach(el => el.remove());
+            console.log('✅ Cleaned up', existingTemps.length, 'existing temp elements');
 
             // Create temporary element
             const element = document.createElement('div');
@@ -601,6 +619,13 @@ export function initOrdersComponent(context) {
             element.style.top = '0';
             element.innerHTML = htmlContent;
             document.body.appendChild(element);
+            console.log('✅ Temp element created and appended');
+            console.log('✅ Element children count:', element.children.length);
+
+            // Wait for fonts to load
+            console.log('⏳ Waiting for fonts to load...');
+            await new Promise(resolve => setTimeout(resolve, 500));
+            console.log('✅ Font wait complete');
 
             // Generate PDF
             const opt = {
@@ -610,8 +635,11 @@ export function initOrdersComponent(context) {
                 html2canvas: { scale: 2, useCORS: true },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
+            console.log('✅ PDF options:', opt);
 
+            console.log('⏳ Starting html2pdf conversion...');
             await html2pdf().set(opt).from(element).save();
+            console.log('✅ html2pdf conversion complete');
 
             // Clean up
             setTimeout(() => {
