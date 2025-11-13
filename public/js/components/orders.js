@@ -480,16 +480,16 @@ export function initOrdersComponent(context) {
                     </div>
                     
                     <div class="info-box">
-                        <div class="info-cell"><strong>${preserveSpaces('שם הספק')}</strong>:&nbsp;${preserveSpaces(order.supplierName || 'ספק')}</div>
-                        <div class="info-cell"><strong>${preserveSpaces('תנאי תשלום')}</strong>:&nbsp;&#x202B;${preserveSpaces(order.paymentTerms || 'שוטף +30')}&#x202C;</div>
+                        <div class="info-cell"><strong>${preserveSpaces('שם הספק')}</strong>&nbsp;${preserveSpaces(order.supplierName || 'ספק')}</div>
+                        <div class="info-cell"><strong>${preserveSpaces('תנאי תשלום')}</strong>&nbsp;&#x202B;${preserveSpaces(order.paymentTerms || 'שוטף +30')}&#x202C;</div>
                     </div>
                     
                     <div class="info-box">
-                        <div class="info-cell"><strong>${preserveSpaces('איש קשר')}</strong>:&nbsp;${preserveSpaces(supplier?.contactName || '')}</div>
-                        <div class="info-cell"><strong>דוא״ל</strong>:&nbsp;${supplier?.email || ''}</div>
+                        <div class="info-cell"><strong>${preserveSpaces('איש קשר')}</strong>&nbsp;${preserveSpaces(supplier?.contactName || '')}</div>
+                        <div class="info-cell"><strong>דוא״ל</strong>&nbsp;${supplier?.email || ''}</div>
                     </div>
                     
-                    <div class="project">&#x202B;${preserveSpaces('פרויקט')}</strong>:&nbsp;${preserveSpaces(order.projectName || 'פרויקט')}&#x202C;</div>
+                    <div class="project">&#x202B;${preserveSpaces('פרויקט')}&nbsp;${preserveSpaces(order.projectName || 'פרויקט')}&#x202C;</div>
                     
                     <table>
                         <thead>
@@ -517,27 +517,27 @@ export function initOrdersComponent(context) {
                     </table>
                     
                     <div class="total-box">
-                        <strong>סה״כ:</strong>&nbsp;₪${formatNumber(order.totalSum || 0)}
+                        <strong>סה״כ</strong>&nbsp;₪${formatNumber(order.totalSum || 0)}
                     </div>
                     <div class="clear"></div>
                     
                     ${order.comments ? `
                     <div class="section">
-                        <div class="section-title">הערות:</div>
+                        <div class="section-title">הערות</div>
                         <div class="section-content">&#x202B;${preserveSpaces(order.comments)}&#x202C;</div>
                     </div>
                     ` : ''}
                     
                     ${order.deliveryAddress ? `
                     <div class="section">
-                        <div class="section-title">${preserveSpaces('כתובת משלוח')}:</div>
+                        <div class="section-title">${preserveSpaces('כתובת משלוח')}</div>
                         <div class="section-content">&#x202B;${preserveSpaces(order.deliveryAddress)}&#x202C;</div>
                     </div>
                     ` : ''}
                     
                     ${order.orderedBy ? `
                     <div class="section">
-                        <strong>${preserveSpaces('מזמין')}</strong>:&nbsp;&#x202B;${preserveSpaces(order.orderedBy)}&#x202C;
+                        <strong>${preserveSpaces('מזמין')}</strong>&nbsp;&#x202B;${preserveSpaces(order.orderedBy)}&#x202C;
                     </div>
                     ` : ''}
                 </body>
