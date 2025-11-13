@@ -15,14 +15,12 @@ export async function loadHebrewFont() {
     }
 
     try {
-        console.log('Fetching Hebrew font (Rubik Regular)...');
-        // Try multiple font URLs with different versions and sources
+        console.log('Fetching Hebrew font (Noto Sans Hebrew Regular)...');
+        // Use Noto Sans Hebrew which has better CORS support and Hebrew coverage
         const fontUrls = [
-            'https://github.com/google/fonts/raw/main/ofl/rubik/Rubik-Regular.ttf',
-            'https://fonts.gstatic.com/s/rubik/v29/iJWZBXyIfDnIV5PNhY1KTN7Z-Yh-B4iFWUU.ttf',
-            'https://fonts.gstatic.com/s/rubik/v30/iJWZBXyIfDnIV5PNhY1KTN7Z-Yh-B4iFWUU.ttf',
-            'https://fonts.gstatic.com/s/rubik/v31/iJWZBXyIfDnIV5PNhY1KTN7Z-Yh-B4iFWUU.ttf',
-            'https://fonts.gstatic.com/s/rubik/v32/iJWZBXyIfDnIV5PNhY1KTN7Z-Yh-B4iFWUU.ttf'
+            'https://github.com/google/fonts/raw/main/ofl/notosanshebrew/NotoSansHebrew-Regular.ttf',
+            'https://fonts.gstatic.com/s/notosanshebrew/v43/or3HQ7v33eiDljA1IufXTtVf7V6RvEEdhQlk0LlGxCyaeNKYZC0sqk3xXGiXd4utoiJltutR2g.ttf',
+            'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/notosanshebrew/NotoSansHebrew-Regular.ttf'
         ];
         
         let lastError;
@@ -57,14 +55,12 @@ export async function loadHebrewBoldFont() {
     }
 
     try {
-        console.log('Fetching Hebrew Bold font (Rubik Bold)...');
-        // Try multiple font URLs with different versions and sources
+        console.log('Fetching Hebrew Bold font (Noto Sans Hebrew Bold)...');
+        // Use Noto Sans Hebrew which has better CORS support and Hebrew coverage
         const fontUrls = [
-            'https://github.com/google/fonts/raw/main/ofl/rubik/Rubik-Bold.ttf',
-            'https://fonts.gstatic.com/s/rubik/v29/iJWZBXyIfDnIV5PNhY1KTN7Z-Yh-NYiFWUUxJI0.ttf',
-            'https://fonts.gstatic.com/s/rubik/v30/iJWZBXyIfDnIV5PNhY1KTN7Z-Yh-NYiFWUUxJI0.ttf',
-            'https://fonts.gstatic.com/s/rubik/v31/iJWZBXyIfDnIV5PNhY1KTN7Z-Yh-NYiFWUUxJI0.ttf',
-            'https://fonts.gstatic.com/s/rubik/v32/iJWZBXyIfDnIV5PNhY1KTN7Z-Yh-NYiFWUUxJI0.ttf'
+            'https://github.com/google/fonts/raw/main/ofl/notosanshebrew/NotoSansHebrew-Bold.ttf',
+            'https://fonts.gstatic.com/s/notosanshebrew/v43/or3HQ7v33eiDljA1IufXTtVf7V6RvEEdhQlk0LlGxCyaeNKYZC0sqk3xXGiXd4uEpyJltutR2g.ttf',
+            'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/notosanshebrew/NotoSansHebrew-Bold.ttf'
         ];
         
         let lastError;
