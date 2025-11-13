@@ -7,7 +7,7 @@ let hebrewBoldFontBytes = null;
 
 /**
  * Load Hebrew Regular font (Noto Sans Hebrew)
- * Fetches from Google Fonts CSS API which returns the actual font URL
+ * Loads from local fonts directory (no CORS issues)
  */
 export async function loadHebrewFont() {
     if (hebrewFontBytes) {
@@ -16,31 +16,19 @@ export async function loadHebrewFont() {
     }
 
     try {
-        console.log('Fetching Hebrew font (Noto Sans Hebrew Regular)...');
+        console.log('Loading Hebrew font from local file...');
         
-        // Fetch the CSS file from Google Fonts
-        const cssUrl = 'https://fonts.googleapis.com/css2?family=Noto+Sans+Hebrew:wght@400&display=swap';
-        const cssResponse = await fetch(cssUrl);
-        const cssText = await cssResponse.text();
+        // Fetch from local fonts directory
+        const fontUrl = '/fonts/NotoSansHebrew-Regular.ttf';
+        const response = await fetch(fontUrl);
         
-        // Extract the font URL from the CSS using regex
-        // Look for url(...) in the @font-face rule
-        const fontUrlMatch = cssText.match(/url\(([^)]+)\)/);
-        
-        if (fontUrlMatch && fontUrlMatch[1]) {
-            const fontUrl = fontUrlMatch[1].replace(/['"]/g, ''); // Remove quotes
-            console.log('Found font URL from Google Fonts CSS:', fontUrl);
-            
-            // Fetch the actual font file
-            const fontResponse = await fetch(fontUrl);
-            if (fontResponse.ok) {
-                hebrewFontBytes = await fontResponse.arrayBuffer();
-                console.log('Hebrew font (Regular) loaded successfully');
-                return hebrewFontBytes;
-            }
+        if (response.ok) {
+            hebrewFontBytes = await response.arrayBuffer();
+            console.log('Hebrew font loaded successfully from local file');
+            return hebrewFontBytes;
         }
         
-        throw new Error('Failed to extract or fetch Hebrew font from Google Fonts');
+        throw new Error('Failed to load Hebrew font from local file');
     } catch (error) {
         console.error('Error loading Hebrew font:', error);
         throw error;
@@ -49,7 +37,7 @@ export async function loadHebrewFont() {
 
 /**
  * Load Hebrew Bold font (Noto Sans Hebrew Bold)
- * Fetches from Google Fonts CSS API which returns the actual font URL
+ * Uses the same variable font file as regular (supports weight 700)
  */
 export async function loadHebrewBoldFont() {
     if (hebrewBoldFontBytes) {
@@ -58,31 +46,19 @@ export async function loadHebrewBoldFont() {
     }
 
     try {
-        console.log('Fetching Hebrew Bold font (Noto Sans Hebrew Bold)...');
+        console.log('Loading Hebrew Bold font from local file...');
         
-        // Fetch the CSS file from Google Fonts
-        const cssUrl = 'https://fonts.googleapis.com/css2?family=Noto+Sans+Hebrew:wght@700&display=swap';
-        const cssResponse = await fetch(cssUrl);
-        const cssText = await cssResponse.text();
+        // Use the same variable font file (supports weights 100-900)
+        const fontUrl = '/fonts/NotoSansHebrew-Regular.ttf';
+        const response = await fetch(fontUrl);
         
-        // Extract the font URL from the CSS using regex
-        // Look for url(...) in the @font-face rule
-        const fontUrlMatch = cssText.match(/url\(([^)]+)\)/);
-        
-        if (fontUrlMatch && fontUrlMatch[1]) {
-            const fontUrl = fontUrlMatch[1].replace(/['"]/g, ''); // Remove quotes
-            console.log('Found font URL from Google Fonts CSS:', fontUrl);
-            
-            // Fetch the actual font file
-            const fontResponse = await fetch(fontUrl);
-            if (fontResponse.ok) {
-                hebrewBoldFontBytes = await fontResponse.arrayBuffer();
-                console.log('Hebrew font (Bold) loaded successfully');
-                return hebrewBoldFontBytes;
-            }
+        if (response.ok) {
+            hebrewBoldFontBytes = await response.arrayBuffer();
+            console.log('Hebrew Bold font loaded successfully from local file');
+            return hebrewBoldFontBytes;
         }
         
-        throw new Error('Failed to extract or fetch Hebrew Bold font from Google Fonts');
+        throw new Error('Failed to load Hebrew Bold font from local file');
     } catch (error) {
         console.error('Error loading Hebrew Bold font:', error);
         throw error;
