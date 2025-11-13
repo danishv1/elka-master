@@ -393,14 +393,15 @@ export function initOrdersComponent(context) {
             const orderDateObj = order.orderDate ? new Date(order.orderDate) : new Date();
             const orderDate = `${String(orderDateObj.getDate()).padStart(2, '0')}/${String(orderDateObj.getMonth() + 1).padStart(2, '0')}/${orderDateObj.getFullYear()}`;
 
-            // ===== HEADER: "הזמנת רכש מס' XX/XXX" + Date =====
-            // Fix: Draw Hebrew text and order number separately to prevent number reversal
-            const headerLabel = reverseHebrewText('הזמנת רכש מס\' ');
-            const headerLabelWidth = boldFont.widthOfTextAtSize(headerLabel, 14);
+            // ===== HEADER: Order Number + "הזמנת רכש מס'" + Date =====
+            // Fix: Draw number first, then Hebrew text to prevent number reversal
             const orderNumberWidth = boldFont.widthOfTextAtSize(order.orderNumber, 14);
+            const spaceWidth = boldFont.widthOfTextAtSize(' ', 14);
+            const headerLabel = reverseHebrewText('הזמנת רכש מס\'');
+            const headerLabelWidth = boldFont.widthOfTextAtSize(headerLabel, 14);
             
-            // Draw Hebrew label (reversed)
-            page.drawText(headerLabel, {
+            // Draw order number first (not reversed, LTR)
+            page.drawText(order.orderNumber, {
                 x: width - marginSide - 200,
                 y,
                 size: 14,
@@ -408,9 +409,18 @@ export function initOrdersComponent(context) {
                 color: black
             });
             
-            // Draw order number separately (not reversed, LTR)
-            page.drawText(order.orderNumber, {
-                x: width - marginSide - 200 + headerLabelWidth,
+            // Draw space
+            page.drawText(' ', {
+                x: width - marginSide - 200 + orderNumberWidth,
+                y,
+                size: 14,
+                font: boldFont,
+                color: black
+            });
+            
+            // Draw Hebrew label (reversed) after the number
+            page.drawText(headerLabel, {
+                x: width - marginSide - 200 + orderNumberWidth + spaceWidth,
                 y,
                 size: 14,
                 font: boldFont,
