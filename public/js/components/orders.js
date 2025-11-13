@@ -460,9 +460,20 @@ export function initOrdersComponent(context) {
                 color: black
             });
 
-            // Payment conditions (left)
-            page.drawText('תנאי תשלום: שוטף +30', {
+            // Payment conditions (left) - draw Hebrew and number separately
+            const paymentHebrewText = reverseHebrewText('תנאי תשלום: שוטף +');
+            const paymentHebrewWidth = font.widthOfTextAtSize(paymentHebrewText, 10);
+            
+            page.drawText(paymentHebrewText, {
                 x: marginSide + 10,
+                y: y - 17,
+                size: 10,
+                font,
+                color: black
+            });
+            
+            page.drawText('30', {
+                x: marginSide + 10 + paymentHebrewWidth,
                 y: y - 17,
                 size: 10,
                 font,
