@@ -4,6 +4,31 @@
 export function initSidurComponent(context) {
     const { state, db, firebase, render, updateHistory } = context;
 
+    // ===== DATE HELPER FUNCTIONS =====
+    
+    /**
+     * Format date to local ISO string (YYYY-MM-DD) without timezone conversion
+     * This prevents the "off by one day" bug caused by UTC conversion
+     */
+    function formatDateLocal(date) {
+        const d = date instanceof Date ? date : new Date(date);
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    /**
+     * Check if a date is today (local time)
+     */
+    function isToday(date) {
+        const today = new Date();
+        const d = date instanceof Date ? date : new Date(date);
+        return d.getFullYear() === today.getFullYear() &&
+               d.getMonth() === today.getMonth() &&
+               d.getDate() === today.getDate();
+    }
+
     // ===== WORK SCHEDULE FUNCTIONS =====
     
     async function loadWorkAssignments() {
@@ -276,7 +301,10 @@ export function initSidurComponent(context) {
         getProjectWorkerExpenses,
         getWorkerAllocationForProjectOnDate,
         getWorkerDayAllocation,
-        getProjectWorkerExpensesDetailed
+        getProjectWorkerExpensesDetailed,
+        // Date helper functions
+        formatDateLocal,
+        isToday
     };
 }
 
