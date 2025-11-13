@@ -575,8 +575,16 @@ export function initOrdersComponent(context) {
                 </html>
             `;
 
+            // Clean up any existing temp elements first
+            const existingTemps = document.querySelectorAll('.pdf-temp-element');
+            existingTemps.forEach(el => el.remove());
+
             // Create temporary element
             const element = document.createElement('div');
+            element.className = 'pdf-temp-element';
+            element.style.position = 'absolute';
+            element.style.left = '-9999px';
+            element.style.top = '0';
             element.innerHTML = htmlContent;
             document.body.appendChild(element);
 
@@ -592,7 +600,11 @@ export function initOrdersComponent(context) {
             await html2pdf().set(opt).from(element).save();
 
             // Clean up
-            document.body.removeChild(element);
+            setTimeout(() => {
+                if (element.parentNode) {
+                    element.parentNode.removeChild(element);
+                }
+            }, 100);
             
             console.log('✅ HTML PDF generated successfully');
 
