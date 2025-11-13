@@ -359,6 +359,10 @@ export function initOrdersComponent(context) {
 
             // Create a new PDF document
             const pdfDoc = await PDFLib.PDFDocument.create();
+            
+            // Register fontkit for custom font support
+            pdfDoc.registerFontkit(fontkit);
+            
             let page = pdfDoc.addPage([595, 842]); // A4 size
             const { width, height } = page.getSize();
 
