@@ -3594,7 +3594,7 @@
             
             // Get assignments for current view
             const getAssignmentsForDateAndProject = (date, projectId) => {
-                const dateStr = toISODateString(date);
+                const dateStr = formatDate(date);
                 return state.workAssignments.filter(a => a.date === dateStr && a.projectId === projectId);
             };
             
@@ -3685,7 +3685,7 @@
                                         <tr>
                                             <th class="border p-2 bg-gray-100 text-sm sticky right-0 z-10" style="min-width: 200px;">לקוח / פרויקט</th>
                                             ${dates.map(date => {
-                                                const isToday = toISODateString(new Date()) === toISODateString(date);
+                                                const isToday = formatDate(new Date()) === formatDate(date);
                                                 const isWeekend = date.getDay() === 5 || date.getDay() === 6;
                                                 return `
                                                 <th class="border p-2 text-xs ${isToday ? 'bg-blue-100 font-bold' : isWeekend ? 'bg-purple-100' : 'bg-gray-100'}">
@@ -3722,8 +3722,8 @@
                                                     </td>
                                                     ${dates.map(date => {
                                                         const assignments = getAssignmentsForDateAndProject(date, project.id);
-                                                        const dateStr = toISODateString(date);
-                                                        const isToday = toISODateString(new Date()) === dateStr;
+                                                        const dateStr = formatDate(date);
+                                                        const isToday = formatDate(new Date()) === dateStr;
                                                         const isWeekend = date.getDay() === 5 || date.getDay() === 6;
                                                         const bgColor = isToday ? '#dbeafe' : isWeekend ? '#f3e8ff' : '';
                                                         return `
@@ -3770,9 +3770,9 @@
                                             
                                             <!-- Calendar Days -->
                                             ${dates.map(date => {
-                                                const dateStr = toISODateString(date);
+                                                const dateStr = formatDate(date);
                                                 const dayAssignments = state.workAssignments.filter(a => a.date === dateStr);
-                                                const isToday = toISODateString(new Date()) === dateStr;
+                                                const isToday = formatDate(new Date()) === dateStr;
                                                 const isCurrentMonth = date.getMonth() === state.calendarDate.getMonth();
                                                 const isFriOrSat = date.getDay() === 5 || date.getDay() === 6;
                                                 
