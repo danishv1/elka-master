@@ -460,12 +460,15 @@ export function initOrdersComponent(context) {
                 color: black
             });
 
-            // Payment conditions (left) - dynamic value
+            // Payment conditions (left) - dynamic value, RTL layout
             const paymentLabel = reverseHebrewText('תנאי תשלום: ');
             const paymentValue = order.paymentTerms || 'שוטף +30';
+            const paymentValueWidth = font.widthOfTextAtSize(paymentValue, 10);
             const paymentLabelWidth = font.widthOfTextAtSize(paymentLabel, 10);
+            const totalPaymentWidth = paymentValueWidth + paymentLabelWidth;
             
-            page.drawText(paymentLabel, {
+            // Draw value first (on the right in LTR positioning)
+            page.drawText(paymentValue, {
                 x: marginSide + 10,
                 y: y - 17,
                 size: 10,
@@ -473,8 +476,9 @@ export function initOrdersComponent(context) {
                 color: black
             });
             
-            page.drawText(paymentValue, {
-                x: marginSide + 10 + paymentLabelWidth,
+            // Draw label after value (on the left in LTR positioning)
+            page.drawText(paymentLabel, {
+                x: marginSide + 10 + paymentValueWidth,
                 y: y - 17,
                 size: 10,
                 font,
@@ -531,7 +535,7 @@ export function initOrdersComponent(context) {
                 });
             }
 
-            y -= box2Height + 20;
+            y -= box2Height + 5;
 
             // ===== PROJECT LINE ===== (right-aligned, bold, larger)
             const projectName = order.projectName || 'פרויקט';
@@ -545,7 +549,7 @@ export function initOrdersComponent(context) {
                 color: black
             });
 
-            y -= 30;
+            y -= 15;
 
             // ===== TABLE =====
             const tableTop = y;
@@ -644,9 +648,9 @@ export function initOrdersComponent(context) {
 
             y -= 30;
 
-            // ===== TOTAL SUM ===== (box shifted right, "סה"כ" on right, number on left)
+            // ===== TOTAL SUM ===== (box aligned to left)
             const sumBoxWidth = 150;
-            const sumBoxX = width - marginSide - sumBoxWidth;
+            const sumBoxX = marginSide;  // Align to left margin
             page.drawRectangle({
                 x: sumBoxX,
                 y: y - 25,
@@ -660,7 +664,7 @@ export function initOrdersComponent(context) {
             const sumLabelText = reverseHebrewText('סה"כ:');
             const sumLabelWidth = boldFont.widthOfTextAtSize(sumLabelText, 11);
             page.drawText(sumLabelText, {
-                x: width - marginSide - 10 - sumLabelWidth,
+                x: sumBoxX + sumBoxWidth - 10 - sumLabelWidth,
                 y: y - 17,
                 size: 11,
                 font: boldFont,
@@ -669,7 +673,6 @@ export function initOrdersComponent(context) {
             
             // Number on the left side of box
             const sumValueText = `₪${formatNumber(order.totalSum || 0)}`;
-            const sumValueWidth = boldFont.widthOfTextAtSize(sumValueText, 11);
             page.drawText(sumValueText, {
                 x: sumBoxX + 10,
                 y: y - 17,
@@ -678,7 +681,7 @@ export function initOrdersComponent(context) {
                 color: black
             });
 
-            y -= 40;
+            y -= 60;
 
             // ===== COMMENTS ===== (right-aligned)
             if (order.comments) {
