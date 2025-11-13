@@ -122,7 +122,7 @@
         });
     </script>
 </head>
-<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen pb-12">
     <div id="app">
         <div class="flex items-center justify-center min-h-screen">
             <div class="text-center">
@@ -197,6 +197,10 @@
         console.log('Firebase initialized');
         console.log('Development mode:', isDevelopment);
 
+        // Version and branch info
+        const APP_VERSION = '1.2.0';
+        const BRANCH_NAME = 'fix/expense-loading-initialization';
+        
         // Categories
         const categories = window.categories = [
             'בטון ומוצריו',
@@ -516,15 +520,21 @@
                 // Setup activity tracking for authenticated users
                 setupActivityTracking();
 
+                // Parse initial URL to set the correct view
+                parseInitialURL();
+
                 // Load data when user is authenticated and authorized
                 loadClients();
-                loadAllProjects(); // Load all projects at startup
-                // Initialize suppliers and orders arrays if not already set
+                // Don't load all projects/orders/assignments upfront - they will be loaded on demand
+                // Initialize arrays if not already set
                 if (!state.suppliers) {
                     state.suppliers = [];
                 }
                 if (!state.orders) {
                     state.orders = [];
+                }
+                if (!state.workAssignments) {
+                    state.workAssignments = [];
                 }
             } else {
                 console.log('User not authenticated');
@@ -575,7 +585,15 @@
                 });
                 console.log('Loaded clients:', state.clients.length);
                 console.log('Clients data:', state.clients);
-                render();
+                
+                // Process pending URL parse if exists
+                if (state.pendingURLParse) {
+                    const { clientId, projectId } = state.pendingURLParse;
+                    state.pendingURLParse = null;
+                    await processClientProjectURL(clientId, projectId);
+                } else {
+                    render();
+                }
             } catch (error) {
                 console.error('Error loading clients:', error);
                 console.error('Error details:', {
@@ -1041,8 +1059,16 @@
             if (!project) return;
             
             state.selectedProject = { ...project };
-            const invoices = await loadInvoices(projectId);
-            state.selectedProject.invoices = invoices;
+            
+            // Load all necessary data for this project in parallel
+            await Promise.all([
+                loadInvoices(projectId).then(invoices => {
+                    state.selectedProject.invoices = invoices;
+                }),
+                loadProjectOrders(projectId),
+                loadProjectWorkAssignments(projectId)
+            ]);
+            
             updateHistory();
             render();
         }
@@ -1128,6 +1154,88 @@
                 state.loadingOrders = false;
                 if (state.user) {
                     alert('שגיאה בטעינת הזמנות: ' + error.message);
+                }
+            }
+        }
+
+        async function loadProjectOrders(projectId) {
+            if (!state.user) {
+                console.log('Cannot load project orders: user not authenticated');
+                return;
+            }
+            try {
+                console.log('Loading orders for project:', projectId);
+                const snapshot = await db.collection('orders')
+                    .where('projectId', '==', projectId)
+                    .get();
+                const projectOrders = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                
+                // Initialize orders array if needed
+                if (!state.orders) {
+                    state.orders = [];
+                }
+                
+                // Merge with existing orders, avoiding duplicates
+                projectOrders.forEach(order => {
+                    const existingIndex = state.orders.findIndex(o => o.id === order.id);
+                    if (existingIndex >= 0) {
+                        // Update existing order
+                        state.orders[existingIndex] = order;
+                    } else {
+                        // Add new order
+                        state.orders.push(order);
+                    }
+                });
+                
+                console.log('Loaded project orders:', projectOrders.length);
+            } catch (error) {
+                console.error('Error loading project orders:', error);
+                if (state.user) {
+                    alert('שגיאה בטעינת הזמנות הפרויקט: ' + error.message);
+                }
+            }
+        }
+
+        async function loadProjectWorkAssignments(projectId) {
+            if (!state.user) {
+                console.log('Cannot load project work assignments: user not authenticated');
+                return;
+            }
+            try {
+                console.log('Loading work assignments for project:', projectId);
+                const snapshot = await db.collection('workAssignments')
+                    .where('projectId', '==', projectId)
+                    .get();
+                const projectAssignments = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                
+                // Initialize work assignments array if needed
+                if (!state.workAssignments) {
+                    state.workAssignments = [];
+                }
+                
+                // Merge with existing assignments, avoiding duplicates
+                projectAssignments.forEach(assignment => {
+                    const existingIndex = state.workAssignments.findIndex(a => a.id === assignment.id);
+                    if (existingIndex >= 0) {
+                        // Update existing assignment
+                        state.workAssignments[existingIndex] = assignment;
+                    } else {
+                        // Add new assignment
+                        state.workAssignments.push(assignment);
+                    }
+                });
+                
+                console.log('Loaded project work assignments:', projectAssignments.length);
+            } catch (error) {
+                console.error('Error loading project work assignments:', error);
+                if (state.user) {
+                    alert('שגיאה בטעינת סידור עבודה של הפרויקט: ' + error.message);
                 }
             }
         }
@@ -2832,6 +2940,22 @@
             `;
         }
 
+        function renderFooter() {
+            return `
+                <footer class="fixed bottom-0 left-0 right-0 bg-gray-800 text-gray-300 text-xs py-2 px-4 z-40">
+                    <div class="max-w-7xl mx-auto flex justify-between items-center">
+                        <div>
+                            <span class="font-semibold text-white">Version ${APP_VERSION}</span>
+                            ${isDevelopment ? `<span class="ml-2 text-gray-400">| Branch: ${BRANCH_NAME}</span>` : ''}
+                        </div>
+                        <div class="text-gray-400">
+                            Invoice Manager © ${new Date().getFullYear()}
+                        </div>
+                    </div>
+                </footer>
+            `;
+        }
+
         function render() {
             const app = document.getElementById('app');
             
@@ -2843,13 +2967,14 @@
                             <div class="text-2xl mb-4">⏳ טוען...</div>
                         </div>
                     </div>
+                    ${renderFooter()}
                 `;
                 return;
             }
             
             // Show login screen if not authenticated
             if (!state.user) {
-                app.innerHTML = renderLoginView();
+                app.innerHTML = renderLoginView() + renderFooter();
                 return;
             }
             
@@ -2859,13 +2984,13 @@
                 if (state.user && state.clients.length === 0 && !state.loading) {
                     loadClients();
                 }
-                app.innerHTML = renderClientsView();
+                app.innerHTML = renderClientsView() + renderFooter();
             } else if (state.view === 'suppliers') {
                 // Ensure suppliers are loaded
                 if (state.user && !state.suppliersLoaded && !state.loadingSuppliers) {
                     loadSuppliers();
                 }
-                app.innerHTML = renderSuppliersView();
+                app.innerHTML = renderSuppliersView() + renderFooter();
             } else if (state.view === 'orders') {
                 // Ensure orders and suppliers are loaded
                 if (state.user && !state.ordersLoaded && !state.loadingOrders) {
@@ -2882,7 +3007,7 @@
                 if (state.user && state.ordersLoaded && (!state.allProjects || state.allProjects.length === 0)) {
                     loadAllProjects();
                 }
-                app.innerHTML = renderOrdersView();
+                app.innerHTML = renderOrdersView() + renderFooter();
             } else if (state.view === 'workSchedule') {
                 // Ensure work assignments are loaded
                 if (state.user && !state.assignmentsLoaded && !state.loadingAssignments) {
@@ -2895,19 +3020,26 @@
                 if (state.user && (!state.allProjects || state.allProjects.length === 0)) {
                     loadAllProjects();
                 }
-                app.innerHTML = renderWorkScheduleView();
+                app.innerHTML = renderWorkScheduleView() + renderFooter();
             } else if (state.view === 'settings') {
-                app.innerHTML = renderSettingsView();
+                app.innerHTML = renderSettingsView() + renderFooter();
             } else if (state.view === 'all-projects') {
                 // Ensure all projects are loaded
                 if (state.user && (!state.allProjects || state.allProjects.length === 0)) {
                     loadAllProjects();
                 }
-                app.innerHTML = renderAllProjectsView();
+                // Load all orders and work assignments for expense calculations
+                if (state.user && !state.ordersLoaded && !state.loadingOrders) {
+                    loadOrders();
+                }
+                if (state.user && !state.assignmentsLoaded && !state.loadingAssignments) {
+                    loadWorkAssignments();
+                }
+                app.innerHTML = renderAllProjectsView() + renderFooter();
             } else if (state.selectedProject) {
-                app.innerHTML = renderInvoiceView();
+                app.innerHTML = renderInvoiceView() + renderFooter();
             } else {
-                app.innerHTML = renderProjectsView();
+                app.innerHTML = renderProjectsView() + renderFooter();
             }
             
             if (state.viewingAttachment) {
@@ -3462,7 +3594,7 @@
             
             // Get assignments for current view
             const getAssignmentsForDateAndProject = (date, projectId) => {
-                const dateStr = formatDate(date);
+                const dateStr = toISODateString(date);
                 return state.workAssignments.filter(a => a.date === dateStr && a.projectId === projectId);
             };
             
@@ -3553,7 +3685,7 @@
                                         <tr>
                                             <th class="border p-2 bg-gray-100 text-sm sticky right-0 z-10" style="min-width: 200px;">לקוח / פרויקט</th>
                                             ${dates.map(date => {
-                                                const isToday = formatDate(new Date()) === formatDate(date);
+                                                const isToday = toISODateString(new Date()) === toISODateString(date);
                                                 const isWeekend = date.getDay() === 5 || date.getDay() === 6;
                                                 return `
                                                 <th class="border p-2 text-xs ${isToday ? 'bg-blue-100 font-bold' : isWeekend ? 'bg-purple-100' : 'bg-gray-100'}">
@@ -3590,8 +3722,8 @@
                                                     </td>
                                                     ${dates.map(date => {
                                                         const assignments = getAssignmentsForDateAndProject(date, project.id);
-                                                        const dateStr = formatDate(date);
-                                                        const isToday = formatDate(new Date()) === dateStr;
+                                                        const dateStr = toISODateString(date);
+                                                        const isToday = toISODateString(new Date()) === dateStr;
                                                         const isWeekend = date.getDay() === 5 || date.getDay() === 6;
                                                         const bgColor = isToday ? '#dbeafe' : isWeekend ? '#f3e8ff' : '';
                                                         return `
@@ -3638,9 +3770,9 @@
                                             
                                             <!-- Calendar Days -->
                                             ${dates.map(date => {
-                                                const dateStr = formatDate(date);
+                                                const dateStr = toISODateString(date);
                                                 const dayAssignments = state.workAssignments.filter(a => a.date === dateStr);
-                                                const isToday = formatDate(new Date()) === dateStr;
+                                                const isToday = toISODateString(new Date()) === dateStr;
                                                 const isCurrentMonth = date.getMonth() === state.calendarDate.getMonth();
                                                 const isFriOrSat = date.getDay() === 5 || date.getDay() === 6;
                                                 
@@ -5053,9 +5185,9 @@
             if (state.view === 'clients' && state.selectedClient) {
                 url = `/clients/${state.selectedClient.id}`;
                 if (state.selectedProject) {
-                    url += `/projects/${state.selectedProject.id}`;
+                    url += `/${state.selectedProject.id}`;
                 }
-            } else if (state.view === 'projects') {
+            } else if (state.view === 'all-projects') {
                 url = '/projects';
             } else if (state.view === 'suppliers') {
                 url = '/suppliers';
@@ -5063,9 +5195,96 @@
                 url = '/orders';
             } else if (state.view === 'workSchedule') {
                 url = '/work-schedule';
+            } else if (state.view === 'settings') {
+                url = '/settings';
+            } else if (state.view === 'clients') {
+                url = '/clients';
             }
             
             return url;
+        }
+        
+        async function parseInitialURL() {
+            const pathname = window.location.pathname;
+            console.log('Parsing initial URL:', pathname);
+            
+            // Parse URL path segments
+            const pathParts = pathname.split('/').filter(p => p);
+            
+            if (pathname === '/suppliers') {
+                state.view = 'suppliers';
+                // Load suppliers when navigating to suppliers view
+                setTimeout(() => loadSuppliers(), 100);
+            } else if (pathname === '/orders') {
+                state.view = 'orders';
+                // Load orders when navigating to orders view
+                setTimeout(() => loadOrders(), 100);
+            } else if (pathname === '/work-schedule') {
+                state.view = 'workSchedule';
+                // Load work assignments when navigating to work schedule view
+                setTimeout(() => loadWorkAssignments(), 100);
+            } else if (pathname === '/settings') {
+                state.view = 'settings';
+                // Load settings when navigating to settings view
+                setTimeout(() => {
+                    if (window.appHandlers && window.appHandlers.settings) {
+                        window.appHandlers.settings.loadSettings();
+                    }
+                }, 100);
+            } else if (pathname === '/projects') {
+                state.view = 'all-projects';
+                // Load all projects when navigating to all projects view
+                setTimeout(() => {
+                    loadAllProjects();
+                    // Also load all orders and work assignments for expense calculations
+                    if (!state.ordersLoaded) loadOrders();
+                    if (!state.assignmentsLoaded) loadWorkAssignments();
+                }, 100);
+            } else if (pathParts[0] === 'clients' && pathParts.length >= 2) {
+                // URL pattern: /clients/{clientId} or /clients/{clientId}/{projectId}
+                const clientId = pathParts[1];
+                const projectId = pathParts[2];
+                
+                console.log('Parsing client/project URL:', { clientId, projectId });
+                
+                // Wait for clients to be loaded first
+                if (state.clients.length === 0) {
+                    console.log('Waiting for clients to load...');
+                    // Set a flag to process URL after clients load
+                    state.pendingURLParse = { clientId, projectId };
+                } else {
+                    await processClientProjectURL(clientId, projectId);
+                }
+            } else if (pathname === '/clients' || pathname === '/' || pathname === '') {
+                state.view = 'clients';
+            } else {
+                state.view = 'clients';
+            }
+            
+            console.log('Initial view set to:', state.view);
+        }
+        
+        async function processClientProjectURL(clientId, projectId) {
+            const client = state.clients.find(c => c.id === clientId);
+            
+            if (client) {
+                state.selectedClient = client;
+                state.view = 'projects';
+                
+                // Load projects for this client
+                await loadProjectsForClient(clientId);
+                
+                // If projectId is specified, select that project
+                if (projectId) {
+                    await selectProject(projectId);
+                }
+                
+                render();
+            } else {
+                console.error('Client not found:', clientId);
+                state.view = 'clients';
+                render();
+            }
         }
         
         function handlePopState(event) {
