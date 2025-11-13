@@ -389,15 +389,27 @@ export function initOrdersComponent(context) {
                             max-width: 100%;
                             overflow: hidden;
                         }
-                        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+                        .header { 
+                            display: flex; 
+                            justify-content: space-between; 
+                            align-items: center; 
+                            margin-bottom: 30px;
+                            position: relative;
+                        }
                         .header-title { 
                             font-size: 16px; 
                             font-weight: bold; 
                             direction: rtl; 
                             unicode-bidi: embed;
                             white-space: pre;
+                            position: absolute;
+                            left: 50%;
+                            transform: translateX(-50%);
                         }
-                        .header-date { font-size: 11px; }
+                        .header-date { 
+                            font-size: 11px;
+                            margin-left: auto;
+                        }
                         .info-box { 
                             border: 1px solid black; 
                             padding: 12px; 
@@ -416,14 +428,23 @@ export function initOrdersComponent(context) {
                         .info-cell:first-child { text-align: right; }
                         .info-cell:last-child { text-align: left; }
                         .project { 
-                            font-size: 14px; 
-                            font-weight: bold; 
-                            margin: 25px 0 20px 0; 
-                            text-align: right;
+                            border: 1px solid black; 
+                            padding: 12px; 
+                            margin-bottom: 5px; 
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                            font-size: 14px;
+                        }
+                        .project-cell { 
+                            flex: 1;
+                            padding: 0 10px;
                             direction: rtl;
                             unicode-bidi: embed;
                             white-space: pre;
+                            font-weight: bold;
                         }
+                        .project-cell:first-child { text-align: right; }
                         table { 
                             width: 100%; 
                             border-collapse: collapse; 
@@ -479,8 +500,8 @@ export function initOrdersComponent(context) {
                 </head>
                 <body>
                     <div class="header">
-                        <div class="header-date">${orderDate}</div>
                         <div class="header-title">${preserveSpaces(' :\'הזמנת רכש מס')} ${order.orderNumber}&#x202C;</div>
+                        <div class="header-date">${orderDate}</div>
                     </div>
                     
                     <div class="info-box">
@@ -493,7 +514,10 @@ export function initOrdersComponent(context) {
                         <div class="info-cell"><strong>${preserveSpaces(' :דוא״ל')}</strong>&nbsp;${supplier?.email || ''}</div>
                     </div>
                     
-                    <div class="project">&#x202B;${preserveSpaces(' :פרויקט')}&nbsp;${preserveSpaces(order.projectName || 'פרויקט')}&#x202C;</div>
+                    <div class="project">
+                        <div class="project-cell"><strong>${preserveSpaces(' :פרויקט')}</strong>&nbsp;${preserveSpaces(order.projectName || 'פרויקט')}</div>
+                        <div class="project-cell"></div>
+                    </div>
                     
                     <table>
                         <thead>
@@ -541,7 +565,7 @@ export function initOrdersComponent(context) {
                     
                     ${order.orderedBy ? `
                     <div class="section">
-                        <strong>${preserveSpaces(' מזמין ')}</strong>&nbsp;&#x202B;${preserveSpaces(order.orderedBy)}&#x202C;
+                        <strong>${preserveSpaces(' :מזמין')}</strong>&nbsp;&#x202B;${preserveSpaces(order.orderedBy)}&#x202C;
                     </div>
                     ` : ''}
                 </body>
