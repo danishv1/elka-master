@@ -1,0 +1,42 @@
+---
+description: Firebase and Firestore best practices
+globs:
+  - "**/*.js"
+alwaysApply: false
+---
+
+# Firebase/Firestore Patterns
+
+## Database Collections
+- `clients` - Client information
+- `projects` - Projects (subcollection of clients)
+- `invoices` - Invoices (subcollection of projects)
+- `suppliers` - Supplier information
+- `orders` - Purchase orders
+- `workAssignments` - Work schedule (סידור עבודה)
+
+## Firestore Best Practices
+- Always use async/await with Firestore operations
+- Handle errors gracefully with try-catch blocks
+- Use batch operations for multiple writes when possible
+- Use subcollections for hierarchical data (projects under clients, invoices under projects)
+- Always update local state after successful Firestore operations
+
+## Example Pattern
+```javascript
+try {
+    const docRef = await db.collection('clients').add(data);
+    // Update local state
+    state.clients.push({ id: docRef.id, ...data });
+    render();
+} catch (error) {
+    console.error('Error adding client:', error);
+    alert('שגיאה בהוספת לקוח');
+}
+```
+
+## Firebase Storage
+- Store files in organized paths: `clients/{clientId}/files/`
+- Handle file uploads with progress indicators
+- Always validate file types and sizes
+- Clean up orphaned files when deleting records

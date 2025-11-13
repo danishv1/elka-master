@@ -1,0 +1,50 @@
+---
+description: Project-specific business logic and constants
+globs:
+  - "public/js/components/**/*.js"
+  - "public/js/shared/**/*.js"
+alwaysApply: false
+---
+
+# Project-Specific Business Logic
+
+## Order Numbers
+- Format: YY/XXX (year/sequence)
+- Example: 24/001, 24/002
+- Auto-generated, sequential
+
+## Project Calculations
+Use `calculateTotals()` for:
+- Total expenses (orders + invoices + work assignments)
+- Profit (revenue - expenses)
+- Profit margin percentage
+
+## Work Schedule (Sidur)
+- Track workers by date
+- Daily rates per worker
+- Link to projects
+- Calculate worker expenses per project
+
+## Available Constants (from shared/constants.js)
+- `categories` - Item categories (בטון, כבלים, צינורות, etc.)
+- `projectStatuses` - Project statuses (פתוח, בביצוע, הושלם, etc.)
+- `workers` - Worker list (יאסר, פריד, אחמד, etc.)
+- `units` - Measurement units (יח', מטר, מטר מרובע, etc.)
+
+Always use these constants rather than hardcoding values.
+
+## Performance & Security
+
+### Optimization Guidelines
+- Load data only when needed
+- Use pagination for large lists
+- Debounce search inputs
+- Cache frequently accessed data in state
+- Minimize DOM manipulation
+
+### Security Best Practices
+- Never expose Firebase config secrets in client code
+- Use Firestore security rules (see `firestore.rules`)
+- Validate all user inputs
+- Sanitize data before displaying
+- Use Firebase Authentication when needed

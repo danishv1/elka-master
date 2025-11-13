@@ -1,0 +1,47 @@
+---
+description: Hebrew language and RTL support
+globs:
+  - "**/*.html"
+  - "**/*.js"
+alwaysApply: false
+---
+
+# Hebrew Language Support
+
+## RTL (Right-to-Left)
+- Use `dir="rtl"` on HTML elements
+- Use Tailwind's RTL utilities where needed
+- All user-facing text should be in Hebrew
+- Code comments can be in English
+- Variable names should be in English
+
+## Hebrew UI Text Examples
+- "הוסף לקוח" (Add client)
+- "פרויקט חדש" (New project)
+- "הזמנת רכש" (Purchase order)
+- "סידור עבודה" (Work schedule)
+- "חשבונית" (Invoice)
+
+## Data Formatting
+
+### Date Handling
+```javascript
+// Always use Israeli locale for dates
+const date = new Date().toLocaleDateString('he-IL');
+// Or use formatDate utility
+const formatted = formatDate(new Date());
+```
+
+### Currency
+- Always show currency with ₪ symbol
+- Format large numbers with commas: ₪10,000
+- Use `formatCurrency()` utility function
+
+## Utilities Available
+Use functions from `shared/utils.js`:
+- `formatDate(date)` - Format dates for display
+- `formatCurrency(amount)` - Format currency (₪1,000)
+- `getStatusColorClass(status)` - Get Tailwind color classes
+- `getHebrewDayName(date)` - Hebrew day names
+- `getHebrewMonthName(date)` - Hebrew month names
+- `calculateTotals(project, state)` - Calculate project financials

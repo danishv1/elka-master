@@ -1,0 +1,88 @@
+---
+description: Common coding patterns and examples
+globs:
+  - "**/*.js"
+alwaysApply: false
+---
+
+# Common Patterns & Examples
+
+## Adding a New Feature
+1. Identify the correct component file (NOT index.html unless it's pure UI)
+2. Add the function to that component
+3. Export it in the return statement
+4. Update state if needed
+5. Call render() if UI changes
+6. Add tests for the new feature
+
+## ❌ ANTI-PATTERN: Adding Logic to index.html
+```javascript
+// BAD: Business logic in index.html
+async function calculateProjectProfit(projectId) {
+    const project = await db.collection('projects').doc(projectId).get();
+    const orders = await db.collection('orders').where('projectId', '==', projectId).get();
+    // ... complex calculations ...
+    return profit;
+}
+```
+
+## ✅ CORRECT PATTERN: Logic in Component Files
+```javascript
+// GOOD: Business logic in components/projects.js
+export function initProjectsComponent(context) {
+    const { db, state } = context;
+    
+    async function calculateProjectProfit(projectId) {
+        const project = await db.collection('projects').doc(projectId).get();
+        const orders = await db.collection('orders').where('projectId', '==', projectId).get();
+        // ... complex calculations ...
+        return profit;
+    }
+    
+    return { calculateProjectProfit };
+}
+
+// index.html just calls the component function:
+const profit = await appHandlers.projects.calculateProjectProfit(projectId);
+```
+
+## Deleting Records
+Always consider cascading deletes:
+- Deleting a client → delete all projects and invoices
+- Deleting a project → delete all invoices
+- Show confirmation dialogs in Hebrew
+
+## Form Handling
+```javascript
+// Pattern for adding/editing records
+state.newItem = { field1: '', field2: '' };
+state.showNewItem = true;
+render();
+
+// On submit
+async function addItem() {
+    const data = state.newItem;
+    // Validate
+    // Save to Firestore
+    // Update state
+    // Reset form
+    state.showNewItem = false;
+    render();
+}
+```
+
+## Component Documentation
+Each component should have a header comment:
+```javascript
+/**
+ * Component Name - Brief description
+ * 
+ * Responsibilities:
+ * - Feature 1
+ * - Feature 2
+ * 
+ * Exported functions:
+ * - function1() - Description
+ * - function2() - Description
+ */
+```

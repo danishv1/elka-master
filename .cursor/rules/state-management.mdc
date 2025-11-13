@@ -1,0 +1,27 @@
+---
+description: Centralized state management patterns
+globs:
+  - "**/*.js"
+alwaysApply: false
+---
+
+# State Management
+
+## Centralized State
+- All state is managed in `shared/state.js`
+- Never create duplicate state objects
+- Always use the shared state instance
+- Update state before calling `render()`
+
+## State Update Pattern
+```javascript
+// Read state
+const currentClient = state.selectedClient;
+
+// Update state
+state.view = 'projects';
+state.selectedClient = clientId;
+
+// Always render after state changes
+render();
+```

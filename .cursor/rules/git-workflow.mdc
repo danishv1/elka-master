@@ -1,0 +1,26 @@
+---
+description: Git workflow and branch management rules
+globs:
+alwaysApply: true
+---
+
+# Git Workflow - CRITICAL RULES
+
+- ❌ NEVER make changes directly to `main` branch
+- ✅ ALWAYS start a new branch for any changes
+- ✅ Branch naming: descriptive-feature-name (e.g., `settings-fix`, `add-client-search`, `order-pdf-update`)
+- ✅ ALWAYS merge to main ONLY when the user explicitly instructs
+- ⚠️ Wait for user approval before merging any branch to main
+- Use WSL for all git operations (e.g., `wsl git checkout -b feature-name`)
+- Keep commits focused and atomic
+- Write descriptive commit messages in English
+- Update CHANGELOG.md for significant changes
+- Don't commit node_modules or sensitive files
+- Create feature branches from main
+- Test thoroughly before requesting merge
+
+## Git Command Examples
+- Create branch: `wsl git checkout -b feature-name`
+- Add files: `wsl git add .`
+- Commit: `wsl git commit -m "description"`
+- Push: `wsl git push origin feature-name`

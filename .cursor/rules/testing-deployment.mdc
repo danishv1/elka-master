@@ -1,0 +1,75 @@
+---
+description: Testing strategy and Firebase deployment workflow
+globs:
+alwaysApply: true
+---
+
+# Testing & Deployment
+
+## ⚠️ Testing Strategy: Production Branch Testing
+**CRITICAL: Testing is done on PRODUCTION using version control and branches**
+
+- ✅ Deploy feature branch to production
+- ✅ Test manually on production with deployed branch
+- ✅ Verify all functionality works in production environment
+- ❌ NO staging environment - testing happens on live production
+- ⚠️ Only merge to main AFTER successful testing on production branch
+
+## Manual Testing Workflow
+1. Create feature branch
+2. Deploy branch to production: `firebase deploy`
+3. Test manually on production Firebase hosting
+4. Verify all features work correctly
+5. If tests pass → request merge to main
+6. If tests fail → fix issues, commit, deploy, test again
+7. After merge to main → deploy main branch
+
+## Firebase Deployment
+- ⚠️ **ALWAYS use `firebase deploy` command directly, NOT `npm run deploy`**
+- Deploy command: `firebase deploy`
+- Deploy specific targets: `firebase deploy --only hosting` or `firebase deploy --only functions`
+
+## Deployment & Testing Workflow
+**CRITICAL: Deploy branches to production for testing**
+
+1. **Feature Branch Deployment**
+   - Deploy feature branch directly to production: `firebase deploy`
+   - The deployed branch will be live on production
+   - Perform manual testing on production
+
+2. **Manual Testing on Production**
+   - Test all new features thoroughly
+   - Verify existing functionality still works
+   - Check UI/UX in production environment
+   - Test edge cases and error scenarios
+   - Verify Hebrew RTL display
+   - Check responsive design on mobile/desktop
+
+3. **After Successful Testing**
+   - If all tests pass → ready for merge to main
+   - Wait for user approval to merge
+   - After merge → deploy main branch
+   - Main branch becomes the stable production version
+
+4. **If Testing Fails**
+   - Fix issues on the feature branch
+   - Commit and push fixes
+   - Deploy feature branch again
+   - Re-test on production
+   - Repeat until all tests pass
+
+## Deployment Checklist
+- ✅ Deploy branch: `firebase deploy`
+- ✅ Test manually on production
+- ✅ Verify all features work
+- ✅ Check console for errors
+- ✅ Test user flows
+- ⏸️ Request merge approval from user
+- ✅ After approval, merge to main
+- ✅ Deploy main branch
+
+## Jest Configuration (Optional Unit Tests)
+- Test files: `tests/**/*.test.js`
+- Run tests: `npm test`
+- Watch mode: `npm test:watch`
+- Coverage: `npm test:coverage`

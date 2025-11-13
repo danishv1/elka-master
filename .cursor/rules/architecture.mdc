@@ -1,0 +1,81 @@
+---
+description: Modular architecture and index.html best practices
+globs:
+  - "**/*.js"
+  - "**/*.html"
+alwaysApply: true
+---
+
+# Architecture & Code Organization
+
+## Modular Component Structure
+- **Always maintain the modular architecture**: Each feature has its own component file
+- **Components location**: `public/js/components/` (clients.js, projects.js, orders.js, suppliers.js, sidur.js, settings.js)
+- **Shared code**: Use `public/js/shared/` for constants, state, and utilities
+- **Views**: Optional view renderers in `public/js/views/`
+- **Main coordinator**: `public/js/app.js` initializes and coordinates all components
+
+## ⚠️ CRITICAL: index.html Best Practices - Apply Intelligently
+
+**Purpose of index.html:**
+- UI structure and layout only
+- Navigation elements
+- Rendering and DOM manipulation
+- Event listener bindings
+
+**❌ AVOID in index.html:**
+- Business logic (should be in component files)
+- Data processing functions (should be in components or utils)
+- Firebase operations (should be in components)
+- Complex calculations (should be in utils or components)
+- Feature-specific code (should be in respective component files)
+
+**✅ ALLOWED in index.html:**
+- HTML structure and Tailwind classes
+- Basic navigation and view switching
+- Calling component functions
+- Render functions that build UI from state
+- Event handlers that delegate to component functions
+
+**Apply Intelligently:**
+When modifying code, ask: "Does this belong in a component file instead?"
+- If it's client-specific logic → `components/clients.js`
+- If it's order processing → `components/orders.js`
+- If it's project calculations → `components/projects.js`
+- If it's a shared utility → `shared/utils.js`
+- If it's just rendering UI → index.html is OK
+
+**Goal: Prevent monolithic app**
+Keep index.html lean and focused. Business logic belongs in modular components.
+
+## Component Pattern
+Each component should follow this pattern:
+```javascript
+export function initComponentName(context) {
+    const { state, db, firebase, storage } = context;
+    
+    async function functionName() {
+        // Implementation
+    }
+    
+    return {
+        functionName,
+        // Export all public functions
+    };
+}
+```
+
+## When Adding Features
+**⚠️ ALWAYS add business logic to component files, NOT index.html**
+
+- **Client features** → `components/clients.js`
+- **Project/invoice features** → `components/projects.js`
+- **Order features** → `components/orders.js`
+- **Supplier features** → `components/suppliers.js`
+- **Work schedule (סידור עבודה)** → `components/sidur.js`
+- **Shared constants** (categories, statuses, workers) → `shared/constants.js`
+- **Helper functions** → `shared/utils.js`
+- **State management** → `shared/state.js`
+- **UI/Rendering/Navigation only** → `index.html`
+
+**Rule of Thumb:** If it processes data or contains business logic, it belongs in a component file!

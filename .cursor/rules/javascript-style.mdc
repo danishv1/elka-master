@@ -1,0 +1,41 @@
+---
+description: JavaScript code style and conventions
+globs:
+  - "**/*.js"
+alwaysApply: false
+---
+
+# JavaScript Code Style
+
+## ES6 Modules
+- Always use ES6 import/export syntax
+- Use named exports for clarity
+- Import only what you need
+
+## Async/Await
+- Prefer async/await over promise chains
+- Always handle errors with try-catch
+- Show user feedback for async operations
+
+## Naming Conventions
+- **Functions**: camelCase (loadClients, addProject)
+- **Constants**: UPPER_SNAKE_CASE or camelCase for arrays/objects
+- **Components**: initComponentName pattern
+- **Event handlers**: handle* or on* prefix (handleSubmit, onClick)
+
+## Error Handling
+- Show Hebrew error messages to users
+- Log detailed English errors to console
+- Use alerts for critical errors
+- Use success messages for confirmations
+
+Example:
+```javascript
+try {
+    await operation();
+    alert('הפעולה בוצעה בהצלחה');
+} catch (error) {
+    console.error('Detailed error:', error);
+    alert('שגיאה: הפעולה נכשלה');
+}
+```

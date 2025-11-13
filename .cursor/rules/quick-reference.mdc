@@ -1,0 +1,81 @@
+---
+description: Quick reference guide and cheat sheets
+globs:
+alwaysApply: false
+---
+
+# Quick Reference
+
+## File Location Cheatsheet
+- Add client code → `components/clients.js`
+- Add project code → `components/projects.js`
+- Add order code → `components/orders.js`
+- Add supplier code → `components/suppliers.js`
+- Add work schedule code → `components/sidur.js`
+- Add shared constants → `shared/constants.js`
+- Add helper functions → `shared/utils.js`
+- Modify state structure → `shared/state.js`
+- App initialization → `app.js`
+- **UI/Rendering/Navigation ONLY** → `index.html`
+
+**⚠️ Remember: Business logic goes in components, NOT index.html!**
+
+## Common Commands
+- Test: `npm test`
+- Test with coverage: `npm test:coverage`
+- Serve locally: `firebase emulators:start`
+- Deploy: `firebase deploy` (NOT npm run deploy)
+- Git commands: Use WSL (e.g., `wsl git status`)
+
+## Git Workflow Checklist
+1. ✅ Create feature branch: `wsl git checkout -b feature-name`
+2. ✅ Make changes and commit: `wsl git commit -m "description"`
+3. ✅ Push: `wsl git push origin feature-name`
+4. ✅ Deploy branch to production: `firebase deploy`
+5. ✅ Test manually on production (deployed branch)
+6. ✅ Verify all functionality works in production
+7. ⏸️ Wait for user to approve merge to main
+8. ✅ After approval, merge to main
+9. ✅ Deploy main branch: `firebase deploy`
+
+## Complete Development Cycle Example
+```bash
+# Start new feature
+wsl git checkout -b add-client-search
+
+# Make changes, code the feature
+# ... edit files ...
+
+# Commit changes
+wsl git add .
+wsl git commit -m "Add client search functionality"
+wsl git push origin add-client-search
+
+# Deploy feature branch to production for testing
+firebase deploy
+
+# Manual testing on production
+# - Open production URL
+# - Test client search feature
+# - Verify it works correctly
+# - Check for any bugs
+
+# If tests pass, ready for merge
+# Wait for user approval
+
+# After user approval
+wsl git checkout main
+wsl git merge add-client-search
+wsl git push origin main
+
+# Deploy stable main branch
+firebase deploy
+```
+
+## Key Reminders
+- This is a modular system designed to avoid merge conflicts. Keep features in their respective component files!
+- Business logic belongs in components, NOT in index.html (Apply Intelligently)
+- index.html is for UI, rendering, and navigation only
+- NEVER commit directly to main branch
+- ALWAYS wait for user approval before merging to main
+- Footer must show version and branch name

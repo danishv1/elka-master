@@ -1,0 +1,32 @@
+---
+description: Tailwind CSS styling and footer requirements
+globs:
+  - "**/*.html"
+  - "**/*.js"
+alwaysApply: true
+---
+
+# Styling
+
+## Tailwind CSS
+- Use Tailwind utility classes
+- Maintain consistent spacing: space-y-4, gap-4, p-4, etc.
+- Use semantic color classes: bg-blue-500, text-gray-700, etc.
+- Responsive design: mobile-first approach
+
+## Common Patterns
+- Cards: `bg-white rounded-lg shadow-sm p-4`
+- Buttons: `bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600`
+- Forms: `space-y-4` for form groups
+- Modals: Use fixed positioning with backdrop
+
+## Footer Requirements
+**ALWAYS APPLY: Version & Branch Display**
+- ✅ Footer MUST always display current version number and branch name
+- Format: `v{version} | {branch-name} {emoji}`
+- Example: `v1.3.5 | settings-fix 🔧`
+- Example: `v1.4.0 | main ✅`
+- Example: `v1.3.6 | order-pdf-update 📄`
+- Get version from package.json
+- Get branch name dynamically or display current working branch
+- Update footer whenever version or branch changes
