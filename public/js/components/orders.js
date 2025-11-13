@@ -460,11 +460,12 @@ export function initOrdersComponent(context) {
                 color: black
             });
 
-            // Payment conditions (left) - draw Hebrew and number separately
-            const paymentHebrewText = reverseHebrewText('תנאי תשלום: שוטף +');
-            const paymentHebrewWidth = font.widthOfTextAtSize(paymentHebrewText, 10);
+            // Payment conditions (left) - dynamic value
+            const paymentLabel = reverseHebrewText('תנאי תשלום: ');
+            const paymentValue = order.paymentTerms || 'שוטף +30';
+            const paymentLabelWidth = font.widthOfTextAtSize(paymentLabel, 10);
             
-            page.drawText(paymentHebrewText, {
+            page.drawText(paymentLabel, {
                 x: marginSide + 10,
                 y: y - 17,
                 size: 10,
@@ -472,8 +473,8 @@ export function initOrdersComponent(context) {
                 color: black
             });
             
-            page.drawText('30', {
-                x: marginSide + 10 + paymentHebrewWidth,
+            page.drawText(paymentValue, {
+                x: marginSide + 10 + paymentLabelWidth,
                 y: y - 17,
                 size: 10,
                 font,
@@ -507,33 +508,44 @@ export function initOrdersComponent(context) {
                 });
             }
 
-            // Email (left)
+            // Email (left) - Hebrew label
             const email = supplier?.email || '';
             if (email) {
-                page.drawText(`Email: ${email}`, {
+                const emailLabel = reverseHebrewText('דוא״ל: ');
+                const emailLabelWidth = font.widthOfTextAtSize(emailLabel, 10);
+                
+                page.drawText(emailLabel, {
                     x: marginSide + 10,
                     y: y - 17,
-                    size: 9,
+                    size: 10,
+                    font,
+                    color: black
+                });
+                
+                page.drawText(email, {
+                    x: marginSide + 10 + emailLabelWidth,
+                    y: y - 17,
+                    size: 10,
                     font,
                     color: black
                 });
             }
 
-            y -= box2Height + 10;
+            y -= box2Height + 20;
 
-            // ===== PROJECT LINE ===== (right-aligned, bold)
+            // ===== PROJECT LINE ===== (right-aligned, bold, larger)
             const projectName = order.projectName || 'פרויקט';
             const projectText = reverseHebrewText('פרויקט: ') + projectName;
-            const projectTextWidth = boldFont.widthOfTextAtSize(projectText, 10);
+            const projectTextWidth = boldFont.widthOfTextAtSize(projectText, 14);
             page.drawText(projectText, {
                 x: width - marginSide - 10 - projectTextWidth,
                 y,
-                size: 10,
+                size: 14,
                 font: boldFont,
                 color: black
             });
 
-            y -= 25;
+            y -= 30;
 
             // ===== TABLE =====
             const tableTop = y;
@@ -551,29 +563,31 @@ export function initOrdersComponent(context) {
                 color: PDFLib.rgb(0.9, 0.9, 0.9)
             });
 
-            // Column positions (RTL: Total rightmost, Serial leftmost)
-            const colTotal = width - marginSide - 10;      // Rightmost
-            const colPrice = width - marginSide - 60;
-            const colQty = width - marginSide - 110;
-            const colUnit = width - marginSide - 160;
-            const colDesc = marginSide + 50;               // Description takes remaining space
-            const colSerial = marginSide + 5;               // Leftmost
+            // Column positions (RTL: Serial rightmost, Total leftmost)
+            const colSerial = width - marginSide - 10;      // Rightmost - מ"ס
+            const colDesc = width - marginSide - 60;        // תיאור פריט
+            const colUnit = marginSide + 200;               // יח'
+            const colQty = marginSide + 140;                // כמות
+            const colPrice = marginSide + 80;               // מחיר
+            const colTotal = marginSide + 5;                // Leftmost - סה"כ
 
-            // Column headers (RTL order)
-            const totalHeaderWidth = boldFont.widthOfTextAtSize(reverseHebrewText('סה"כ'), 10);
-            page.drawText(reverseHebrewText('סה"כ'), { x: colTotal - totalHeaderWidth, y: tableTop - 17, size: 10, font: boldFont, color: black });
+            // Column headers (RTL order: Serial → Description → Unit → Qty → Price → Total)
+            const serialHeaderWidth = boldFont.widthOfTextAtSize(reverseHebrewText('מ"ס'), 10);
+            page.drawText(reverseHebrewText('מ"ס'), { x: colSerial - serialHeaderWidth, y: tableTop - 17, size: 10, font: boldFont, color: black });
             
-            const priceHeaderWidth = boldFont.widthOfTextAtSize(reverseHebrewText('מחיר'), 10);
-            page.drawText(reverseHebrewText('מחיר'), { x: colPrice - priceHeaderWidth, y: tableTop - 17, size: 10, font: boldFont, color: black });
-            
-            const qtyHeaderWidth = boldFont.widthOfTextAtSize(reverseHebrewText('כמות'), 10);
-            page.drawText(reverseHebrewText('כמות'), { x: colQty - qtyHeaderWidth, y: tableTop - 17, size: 10, font: boldFont, color: black });
+            const descHeaderWidth = boldFont.widthOfTextAtSize(reverseHebrewText('תיאור פריט'), 10);
+            page.drawText(reverseHebrewText('תיאור פריט'), { x: colDesc - descHeaderWidth, y: tableTop - 17, size: 10, font: boldFont, color: black });
             
             const unitHeaderWidth = boldFont.widthOfTextAtSize(reverseHebrewText('יח\''), 10);
             page.drawText(reverseHebrewText('יח\''), { x: colUnit - unitHeaderWidth, y: tableTop - 17, size: 10, font: boldFont, color: black });
             
-            page.drawText(reverseHebrewText('תיאור פריט'), { x: colDesc, y: tableTop - 17, size: 10, font: boldFont, color: black });
-            page.drawText(reverseHebrewText('מ"ס'), { x: colSerial, y: tableTop - 17, size: 10, font: boldFont, color: black });
+            const qtyHeaderWidth = boldFont.widthOfTextAtSize(reverseHebrewText('כמות'), 10);
+            page.drawText(reverseHebrewText('כמות'), { x: colQty - qtyHeaderWidth, y: tableTop - 17, size: 10, font: boldFont, color: black });
+            
+            const priceHeaderWidth = boldFont.widthOfTextAtSize(reverseHebrewText('מחיר'), 10);
+            page.drawText(reverseHebrewText('מחיר'), { x: colPrice - priceHeaderWidth, y: tableTop - 17, size: 10, font: boldFont, color: black });
+            
+            page.drawText(reverseHebrewText('סה"כ'), { x: colTotal, y: tableTop - 17, size: 10, font: boldFont, color: black });
 
             y = tableTop - headerHeight;
 
@@ -597,13 +611,17 @@ export function initOrdersComponent(context) {
                     borderWidth: 0.5
                 });
 
-                // Serial number (leftmost)
-                page.drawText(String(index + 1), { x: colSerial, y: y + 5, size: 9, font, color: black });
+                // Serial number (rightmost, right-aligned)
+                const serialText = String(index + 1);
+                const serialWidth = font.widthOfTextAtSize(serialText, 9);
+                page.drawText(serialText, { x: colSerial - serialWidth, y: y + 5, size: 9, font, color: black });
                 
-                // Description
+                // Description (right-aligned)
                 const desc = item.description || '';
                 const maxDescLength = 35;
-                page.drawText(reverseHebrewText(desc.substring(0, maxDescLength)), { x: colDesc, y: y + 5, size: 9, font, color: black });
+                const descText = reverseHebrewText(desc.substring(0, maxDescLength));
+                const descWidth = font.widthOfTextAtSize(descText, 9);
+                page.drawText(descText, { x: colDesc - descWidth, y: y + 5, size: 9, font, color: black });
                 
                 // Unit (right-aligned)
                 const unitText = reverseHebrewText(item.unit || 'יח\'');
@@ -620,10 +638,8 @@ export function initOrdersComponent(context) {
                 const priceWidth = font.widthOfTextAtSize(priceText, 9);
                 page.drawText(priceText, { x: colPrice - priceWidth, y: y + 5, size: 9, font, color: black });
                 
-                // Total (rightmost, right-aligned)
-                const totalText = formatNumber(item.sum || 0);
-                const totalWidth = font.widthOfTextAtSize(totalText, 9);
-                page.drawText(totalText, { x: colTotal - totalWidth, y: y + 5, size: 9, font, color: black });
+                // Total (leftmost)
+                page.drawText(formatNumber(item.sum || 0), { x: colTotal, y: y + 5, size: 9, font, color: black });
             });
 
             y -= 30;
