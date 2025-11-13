@@ -1,0 +1,317 @@
+        try {
+            const order = state.orders.find(o => o.id === orderId);
+            if (!order) {
+                alert('הזמנה לא נמצאה');
+                return;
+            }
+
+            // Create PDF
+            const pdfDoc = await PDFLib.PDFDocument.create();
+            pdfDoc.registerFontkit(fontkit);
+            let page = pdfDoc.addPage([595, 842]); // A4
+            const { width, height } = page.getSize();
+
+            // Load fonts
+            let font, boldFont;
+            try {
+                const fontBytes = await loadHebrewFont();
+                const boldFontBytes = await loadHebrewBoldFont();
+                font = await pdfDoc.embedFont(fontBytes);
+                boldFont = await pdfDoc.embedFont(boldFontBytes);
+            } catch (error) {
+                console.error('Font error:', error);
+                font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
+                boldFont = await pdfDoc.embedFont(PDFLib.StandardFonts.HelveticaBold);
+            }
+
+            // Colors
+            const black = PDFLib.rgb(0, 0, 0);
+
+            // Margins
+            const marginTop = 4 * 28.35;
+            const marginBottom = 2 * 28.35;
+            const marginSide = 1.5 * 28.35;
+            let y = height - marginTop;
+
+            // Get data
+            const supplier = state.suppliers.find(s => s.id === order.supplierId);
+            const orderDateObj = order.orderDate ? new Date(order.orderDate) : new Date();
+            const orderDate = `${String(orderDateObj.getDate()).padStart(2, '0')}/${String(orderDateObj.getMonth() + 1).padStart(2, '0')}/${orderDateObj.getFullYear()}`;
+
+            // ===== HEADER: "הזמנת רכש מס' XX/XXX" + Date =====
+            page.drawText(`הזמנת רכש מס' ${order.orderNumber}`, {
+                x: width - marginSide - 200,
+                y,
+                size: 14,
+                font: boldFont,
+                color: black
+            });
+
+            page.drawText(orderDate, {
+                x: marginSide,
+                y,
+                size: 11,
+                font,
+                color: black
+            });
+
+            y -= 35;
+
+            // ===== BOX 1: Supplier Name / Payment Conditions =====
+            const box1Height = 25;
+            page.drawRectangle({
+                x: marginSide,
+                y: y - box1Height,
+                width: width - 2 * marginSide,
+                height: box1Height,
+                borderColor: black,
+                borderWidth: 1
+            });
+
+            // Supplier name (right)
+            const supplierName = order.supplierName || 'ספק';
+            page.drawText(`שם הספק: ${supplierName}`, {
+                x: width - marginSide - 180,
+                y: y - 17,
+                size: 10,
+                font,
+                color: black
+            });
+
+            // Payment conditions (left)
+            page.drawText('תנאי תשלום: שוטף +30', {
+                x: marginSide + 10,
+                y: y - 17,
+                size: 10,
+                font,
+                color: black
+            });
+
+            y -= box1Height + 5;
+
+            // ===== BOX 2: Contact Person / Email =====
+            const box2Height = 25;
+            page.drawRectangle({
+                x: marginSide,
+                y: y - box2Height,
+                width: width - 2 * marginSide,
+                height: box2Height,
+                borderColor: black,
+                borderWidth: 1
+            });
+
+            // Contact person (right)
+            const contactPerson = supplier?.contactName || '';
+            if (contactPerson) {
+                page.drawText(`איש קשר: ${contactPerson}`, {
+                    x: width - marginSide - 180,
+                    y: y - 17,
+                    size: 10,
+                    font,
+                    color: black
+                });
+            }
+
+            // Email (left)
+            const email = supplier?.email || '';
+            if (email) {
+                page.drawText(`Email: ${email}`, {
+                    x: marginSide + 10,
+                    y: y - 17,
+                    size: 9,
+                    font,
+                    color: black
+                });
+            }
+
+            y -= box2Height + 10;
+
+            // ===== PROJECT LINE =====
+            const projectName = order.projectName || 'פרויקט';
+            page.drawText(`פרויקט: ${projectName}`, {
+                x: marginSide,
+                y,
+                size: 10,
+                font: boldFont,
+                color: black
+            });
+
+            y -= 25;
+
+            // ===== TABLE =====
+            const tableTop = y;
+            const rowHeight = 20;
+            const headerHeight = 25;
+            
+            // Table header
+            page.drawRectangle({
+                x: marginSide,
+                y: tableTop - headerHeight,
+                width: width - 2 * marginSide,
+                height: headerHeight,
+                borderColor: black,
+                borderWidth: 1,
+                color: PDFLib.rgb(0.9, 0.9, 0.9)
+            });
+
+            // Column positions
+            const colSerial = marginSide + 5;
+            const colDesc = marginSide + 35;
+            const colUnit = width - marginSide - 230;
+            const colQty = width - marginSide - 170;
+            const colPrice = width - marginSide - 110;
+            const colTotal = width - marginSide - 50;
+
+            // Column headers
+            page.drawText('מ"ס', { x: colSerial, y: tableTop - 17, size: 10, font: boldFont, color: black });
+            page.drawText('תיאור פריט', { x: colDesc, y: tableTop - 17, size: 10, font: boldFont, color: black });
+            page.drawText('יח\'', { x: colUnit, y: tableTop - 17, size: 10, font: boldFont, color: black });
+            page.drawText('כמות', { x: colQty, y: tableTop - 17, size: 10, font: boldFont, color: black });
+            page.drawText('מחיר', { x: colPrice, y: tableTop - 17, size: 10, font: boldFont, color: black });
+            page.drawText('סה"כ', { x: colTotal, y: tableTop - 17, size: 10, font: boldFont, color: black });
+
+            y = tableTop - headerHeight;
+
+            // Table rows
+            order.items.forEach((item, index) => {
+                y -= rowHeight;
+                
+                // Check if new page needed
+                if (y < marginBottom + 50) {
+                    page = pdfDoc.addPage([595, 842]);
+                    y = height - marginTop;
+                }
+                
+                // Draw row border
+                page.drawRectangle({
+                    x: marginSide,
+                    y,
+                    width: width - 2 * marginSide,
+                    height: rowHeight,
+                    borderColor: black,
+                    borderWidth: 0.5
+                });
+
+                // Serial number
+                page.drawText(String(index + 1), { x: colSerial, y: y + 5, size: 9, font, color: black });
+                
+                // Description
+                const desc = item.description || '';
+                const maxDescLength = 35;
+                page.drawText(desc.substring(0, maxDescLength), { x: colDesc, y: y + 5, size: 9, font, color: black });
+                
+                // Unit
+                page.drawText(item.unit || 'יח\'', { x: colUnit, y: y + 5, size: 9, font, color: black });
+                
+                // Quantity
+                page.drawText(String(item.quantity || 1), { x: colQty, y: y + 5, size: 9, font, color: black });
+                
+                // Price
+                page.drawText(formatNumber(item.price || 0), { x: colPrice, y: y + 5, size: 9, font, color: black });
+                
+                // Total
+                page.drawText(formatNumber(item.sum || 0), { x: colTotal, y: y + 5, size: 9, font, color: black });
+            });
+
+            y -= 30;
+
+            // ===== TOTAL SUM =====
+            page.drawRectangle({
+                x: width - marginSide - 150,
+                y: y - 25,
+                width: 150,
+                height: 25,
+                borderColor: black,
+                borderWidth: 1
+            });
+
+            page.drawText('סה"כ:', {
+                x: width - marginSide - 140,
+                y: y - 17,
+                size: 11,
+                font: boldFont,
+                color: black
+            });
+            
+            page.drawText(`₪${formatNumber(order.totalSum || 0)}`, {
+                x: width - marginSide - 80,
+                y: y - 17,
+                size: 11,
+                font: boldFont,
+                color: black
+            });
+
+            y -= 40;
+
+            // ===== COMMENTS =====
+            if (order.comments) {
+                page.drawText('הערות:', {
+                    x: marginSide,
+                    y,
+                    size: 10,
+                    font: boldFont,
+                    color: black
+                });
+                y -= 15;
+                
+                const commentLines = wrapText(order.comments, width - 2 * marginSide - 20, font, 9);
+                for (const line of commentLines) {
+                    page.drawText(line, {
+                        x: marginSide,
+                        y,
+                        size: 9,
+                        font,
+                        color: black
+                    });
+                    y -= 12;
+                }
+                y -= 10;
+            }
+
+            // ===== ADDRESS =====
+            if (order.deliveryAddress) {
+                page.drawText('כתובת משלוח:', {
+                    x: marginSide,
+                    y,
+                    size: 10,
+                    font: boldFont,
+                    color: black
+                });
+                y -= 15;
+                
+                page.drawText(order.deliveryAddress, {
+                    x: marginSide,
+                    y,
+                    size: 9,
+                    font,
+                    color: black
+                });
+                y -= 20;
+            }
+
+            // ===== ORDERING PERSON (מזמין) =====
+            if (order.orderedBy) {
+                page.drawText(`מזמין: ${order.orderedBy}`, {
+                    x: marginSide,
+                    y,
+                    size: 10,
+                    font: boldFont,
+                    color: black
+                });
+            }
+
+            // Save and download
+            const pdfBytes = await pdfDoc.save();
+            const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `Order_${order.orderNumber.replace('/', '-')}.pdf`;
+            link.click();
+            URL.revokeObjectURL(url);
+            console.log('✅ PDF generated successfully');
+
+        } catch (error) {
+            console.error('❌ Error generating PDF:', error);
+            alert('שגיאה ביצירת PDF: ' + error.message);
+        }
