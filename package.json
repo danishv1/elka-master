@@ -1,6 +1,6 @@
 {
   "name": "invoice-manager",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "Invoice Management System",
   "main": "public/index.html",
   "scripts": {

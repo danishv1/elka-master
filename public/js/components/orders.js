@@ -388,23 +388,28 @@ export function initOrdersComponent(context) {
             const black = PDFLib.rgb(pdfColors.black.r, pdfColors.black.g, pdfColors.black.b);
             const white = PDFLib.rgb(pdfColors.white.r, pdfColors.white.g, pdfColors.white.b);
 
-            // ===== HEADER SECTION =====
-            const margin = 40;
-            let yPos = height - 40;
+            // ===== MARGINS =====
+            // Convert cm to points (1 cm = 28.35 points)
+            const marginTop = 4.5 * 28.35;     // 4cm = ~113 points
+            const marginBottom = 2 * 28.35;  // 2cm = ~57 points
+            const marginSide = 1.5 * 28.35;  // 1.5cm = ~42.5 points
+            const margin = marginSide;
+            let yPos = height - marginTop;
 
-            // Draw header background
+            // Draw header background (starts at top margin)
+            const headerHeight = 100;
             page.drawRectangle({
                 x: 0,
-                y: height - 120,
+                y: height - marginTop - headerHeight,
                 width: width,
-                height: 120,
+                height: headerHeight,
                 color: primaryColor,
             });
 
             // Company title
             page.drawText(reverseHebrewText('הזמנת רכש'), {
                 x: width - margin - 150,
-                y: height - 60,
+                y: height - marginTop - 50,
                 size: 28,
                 font: boldFont,
                 color: white
@@ -413,7 +418,7 @@ export function initOrdersComponent(context) {
             // Document subtitle
             page.drawText(reverseHebrewText('PURCHASE ORDER'), {
                 x: margin,
-                y: height - 60,
+                y: height - marginTop - 50,
                 size: 16,
                 font: boldFont,
                 color: white,
@@ -421,7 +426,7 @@ export function initOrdersComponent(context) {
             });
 
             // ===== ORDER INFO BOX =====
-            yPos = height - 150;
+            yPos = height - marginTop - headerHeight - 30;
             const boxHeight = 110;
             
             // Draw info box with border
@@ -765,7 +770,7 @@ export function initOrdersComponent(context) {
             }
 
             // ===== FOOTER =====
-            const footerY = 40;
+            const footerY = marginBottom + 10; // Footer positioned at bottom margin
             page.drawLine({
                 start: { x: margin, y: footerY + 20 },
                 end: { x: width - margin, y: footerY + 20 },
