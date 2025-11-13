@@ -363,6 +363,12 @@ export function initOrdersComponent(context) {
             const orderDateObj = order.orderDate ? new Date(order.orderDate) : new Date();
             const orderDate = `${String(orderDateObj.getDate()).padStart(2, '0')}/${String(orderDateObj.getMonth() + 1).padStart(2, '0')}/${orderDateObj.getFullYear()}`;
 
+            // Helper function to preserve spaces in HTML
+            const preserveSpaces = (text) => {
+                if (!text) return '';
+                return text.replace(/ /g, '&nbsp;');
+            };
+
             // Create HTML content with proper RTL and Unicode direction marks
             const htmlContent = `
                 <!DOCTYPE html>
@@ -380,7 +386,13 @@ export function initOrdersComponent(context) {
                             line-height: 1.6;
                         }
                         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-                        .header-title { font-size: 16px; font-weight: bold; direction: rtl; unicode-bidi: embed; }
+                        .header-title { 
+                            font-size: 16px; 
+                            font-weight: bold; 
+                            direction: rtl; 
+                            unicode-bidi: embed;
+                            white-space: pre;
+                        }
                         .header-date { font-size: 11px; }
                         .info-box { 
                             border: 1px solid black; 
@@ -395,6 +407,7 @@ export function initOrdersComponent(context) {
                             padding: 0 10px;
                             direction: rtl;
                             unicode-bidi: embed;
+                            white-space: pre;
                         }
                         .info-cell:first-child { text-align: right; }
                         .info-cell:last-child { text-align: left; }
@@ -405,6 +418,7 @@ export function initOrdersComponent(context) {
                             text-align: right;
                             direction: rtl;
                             unicode-bidi: embed;
+                            white-space: pre;
                         }
                         table { 
                             width: 100%; 
@@ -419,6 +433,7 @@ export function initOrdersComponent(context) {
                             border: 1px solid black; 
                             padding: 8px; 
                             text-align: right;
+                            white-space: pre;
                         }
                         td { 
                             border: 1px solid black; 
@@ -426,6 +441,7 @@ export function initOrdersComponent(context) {
                             text-align: right;
                             direction: rtl;
                             unicode-bidi: embed;
+                            white-space: pre;
                         }
                         .total-box { 
                             border: 1px solid black; 
@@ -435,6 +451,7 @@ export function initOrdersComponent(context) {
                             float: left;
                             direction: rtl;
                             unicode-bidi: embed;
+                            white-space: pre;
                         }
                         .clear { clear: both; }
                         .section { 
@@ -443,7 +460,11 @@ export function initOrdersComponent(context) {
                             direction: rtl;
                             unicode-bidi: embed;
                         }
-                        .section-title { font-weight: bold; margin-bottom: 8px; }
+                        .section-title { 
+                            font-weight: bold; 
+                            margin-bottom: 8px;
+                            white-space: pre;
+                        }
                         .section-content { 
                             font-size: 10px; 
                             white-space: pre-wrap;
@@ -459,16 +480,16 @@ export function initOrdersComponent(context) {
                     </div>
                     
                     <div class="info-box">
-                        <div class="info-cell"><strong>שם הספק:</strong> ${order.supplierName || 'ספק'}</div>
-                        <div class="info-cell"><strong>תנאי תשלום:</strong> &#x202B;${order.paymentTerms || 'שוטף +30'}&#x202C;</div>
+                        <div class="info-cell"><strong>שם הספק:</strong> ${preserveSpaces(order.supplierName || 'ספק')}</div>
+                        <div class="info-cell"><strong>תנאי תשלום:</strong> &#x202B;${preserveSpaces(order.paymentTerms || 'שוטף +30')}&#x202C;</div>
                     </div>
                     
                     <div class="info-box">
-                        <div class="info-cell"><strong>איש קשר:</strong> ${supplier?.contactName || ''}</div>
+                        <div class="info-cell"><strong>איש קשר:</strong> ${preserveSpaces(supplier?.contactName || '')}</div>
                         <div class="info-cell"><strong>דוא״ל:</strong> ${supplier?.email || ''}</div>
                     </div>
                     
-                    <div class="project">&#x202B;פרויקט: ${order.projectName || 'פרויקט'}&#x202C;</div>
+                    <div class="project">&#x202B;פרויקט: ${preserveSpaces(order.projectName || 'פרויקט')}&#x202C;</div>
                     
                     <table>
                         <thead>
@@ -485,8 +506,8 @@ export function initOrdersComponent(context) {
                             ${order.items.map((item, index) => `
                                 <tr>
                                     <td>${index + 1}</td>
-                                    <td>&#x202B;${item.description || ''}&#x202C;</td>
-                                    <td>${item.unit || 'יח׳'}</td>
+                                    <td>&#x202B;${preserveSpaces(item.description || '')}&#x202C;</td>
+                                    <td>${preserveSpaces(item.unit || 'יח׳')}</td>
                                     <td>${item.quantity || 1}</td>
                                     <td>${formatNumber(item.price || 0)}</td>
                                     <td>${formatNumber(item.sum || 0)}</td>
@@ -503,20 +524,20 @@ export function initOrdersComponent(context) {
                     ${order.comments ? `
                     <div class="section">
                         <div class="section-title">הערות:</div>
-                        <div class="section-content">&#x202B;${order.comments}&#x202C;</div>
+                        <div class="section-content">&#x202B;${preserveSpaces(order.comments)}&#x202C;</div>
                     </div>
                     ` : ''}
                     
                     ${order.deliveryAddress ? `
                     <div class="section">
                         <div class="section-title">כתובת משלוח:</div>
-                        <div class="section-content">&#x202B;${order.deliveryAddress}&#x202C;</div>
+                        <div class="section-content">&#x202B;${preserveSpaces(order.deliveryAddress)}&#x202C;</div>
                     </div>
                     ` : ''}
                     
                     ${order.orderedBy ? `
                     <div class="section">
-                        <strong>מזמין:</strong> &#x202B;${order.orderedBy}&#x202C;
+                        <strong>מזמין:</strong> &#x202B;${preserveSpaces(order.orderedBy)}&#x202C;
                     </div>
                     ` : ''}
                 </body>
