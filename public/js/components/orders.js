@@ -389,25 +389,11 @@ export function initOrdersComponent(context) {
             const formattedTotal = formatNumberLocal(parseFloat(order.totalSum) || 0);
 
             // Create HTML content with proper RTL and Unicode direction marks
+            // NOTE: Do NOT use full HTML document structure - just a div with content
             const htmlContent = `
-                <!DOCTYPE html>
-                <html dir="rtl" lang="he">
-                <head>
-                    <meta charset="UTF-8">
-                    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Hebrew:wght@400;700&display=swap" rel="stylesheet">
+                <div dir="rtl" style="font-family: 'Noto Sans Hebrew', Arial, sans-serif; direction: rtl; padding: 20px; font-size: 12px; line-height: 1.6; background: white;">
                     <style>
                         * { box-sizing: border-box; }
-                        body { 
-                            font-family: 'Noto Sans Hebrew', Arial, sans-serif; 
-                            direction: rtl;
-                            padding: 0;
-                            margin: 0;
-                            font-size: 12px;
-                            line-height: 1.6;
-                            box-sizing: border-box;
-                            max-width: 100%;
-                            overflow: hidden;
-                        }
                         .header { 
                             display: flex; 
                             justify-content: space-between; 
@@ -517,8 +503,7 @@ export function initOrdersComponent(context) {
                             unicode-bidi: embed;
                         }
                     </style>
-                </head>
-                <body>
+
                     <div class="header">
                         <div class="header-title">${preserveSpaces(' :\'הזמנת רכש מס')} ${order.orderNumber}&#x202C;</div>
                         <div class="header-date">${orderDate}</div>
@@ -588,10 +573,9 @@ export function initOrdersComponent(context) {
                         <strong>מזמין:</strong>&nbsp;${order.orderedBy}
                     </div>
                     ` : ''}
-                    
+
                     <!-- DEBUG: orderedBy = "${order.orderedBy || 'EMPTY'}" -->
-                </body>
-                </html>
+                </div>
             `;
 
             console.log('✅ HTML content length:', htmlContent.length);

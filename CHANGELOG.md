@@ -5,6 +5,21 @@ All notable changes to the Invoice Manager project will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.12] - 2025-11-13
+
+### Fixed
+- **CRITICAL FIX**: Removed nested HTML document structure from PDF template
+- Changed from full `<!DOCTYPE><html><head><body>` to simple `<div>` with embedded styles
+- html2canvas cannot properly capture nested HTML documents in innerHTML
+- This should resolve the blank PDF issue while element is visible
+
+### Changed
+- Simplified HTML structure: single div with inline styles instead of full document
+- Removed `<html>`, `<head>`, `<body>` tags - using only content div
+- Styles now embedded in `<style>` tag within the main div
+
+---
+
 ## [2.1.11] - 2025-11-13
 
 ### Fixed
