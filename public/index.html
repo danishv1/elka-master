@@ -132,8 +132,8 @@
     </div>
     
     <!-- Version Info Footer -->
-    <div class="fixed bottom-2 left-2 text-xs text-gray-400 bg-white/50 backdrop-blur-sm px-2 py-1 rounded">
-        v1.3.5 | settings-fix 🔧
+    <div id="version-footer" class="fixed bottom-2 left-2 text-xs text-gray-400 bg-white/50 backdrop-blur-sm px-2 py-1 rounded">
+        <!-- Dynamically updated by JavaScript -->
     </div>
 
     <script>
@@ -198,8 +198,8 @@
         console.log('Development mode:', isDevelopment);
 
         // Version and branch info
-        const APP_VERSION = '1.2.0';
-        const BRANCH_NAME = 'fix/expense-loading-initialization';
+        const APP_VERSION = '1.3.5';
+        const BRANCH_NAME = 'main';
         
         // Categories
         const categories = window.categories = [
@@ -2940,20 +2940,13 @@
             `;
         }
 
-        function renderFooter() {
-            return `
-                <footer class="fixed bottom-0 left-0 right-0 bg-gray-800 text-gray-300 text-xs py-2 px-4 z-40">
-                    <div class="max-w-7xl mx-auto flex justify-between items-center">
-                        <div>
-                            <span class="font-semibold text-white">Version ${APP_VERSION}</span>
-                            ${isDevelopment ? `<span class="ml-2 text-gray-400">| Branch: ${BRANCH_NAME}</span>` : ''}
-                        </div>
-                        <div class="text-gray-400">
-                            Invoice Manager © ${new Date().getFullYear()}
-                        </div>
-                    </div>
-                </footer>
-            `;
+        function updateVersionFooter() {
+            const footer = document.getElementById('version-footer');
+            if (footer) {
+                const branch = BRANCH_NAME || 'main';
+                const emoji = branch === 'main' ? '✅' : '🔧';
+                footer.textContent = `v${APP_VERSION} | ${branch} ${emoji}`;
+            }
         }
 
         function render() {
@@ -2967,14 +2960,15 @@
                             <div class="text-2xl mb-4">⏳ טוען...</div>
                         </div>
                     </div>
-                    ${renderFooter()}
                 `;
+                updateVersionFooter();
                 return;
             }
             
             // Show login screen if not authenticated
             if (!state.user) {
-                app.innerHTML = renderLoginView() + renderFooter();
+                app.innerHTML = renderLoginView();
+                updateVersionFooter();
                 return;
             }
             
@@ -2984,13 +2978,13 @@
                 if (state.user && state.clients.length === 0 && !state.loading) {
                     loadClients();
                 }
-                app.innerHTML = renderClientsView() + renderFooter();
+                app.innerHTML = renderClientsView();
             } else if (state.view === 'suppliers') {
                 // Ensure suppliers are loaded
                 if (state.user && !state.suppliersLoaded && !state.loadingSuppliers) {
                     loadSuppliers();
                 }
-                app.innerHTML = renderSuppliersView() + renderFooter();
+                app.innerHTML = renderSuppliersView();
             } else if (state.view === 'orders') {
                 // Ensure orders and suppliers are loaded
                 if (state.user && !state.ordersLoaded && !state.loadingOrders) {
@@ -3007,7 +3001,7 @@
                 if (state.user && state.ordersLoaded && (!state.allProjects || state.allProjects.length === 0)) {
                     loadAllProjects();
                 }
-                app.innerHTML = renderOrdersView() + renderFooter();
+                app.innerHTML = renderOrdersView();
             } else if (state.view === 'workSchedule') {
                 // Ensure work assignments are loaded
                 if (state.user && !state.assignmentsLoaded && !state.loadingAssignments) {
@@ -3020,9 +3014,9 @@
                 if (state.user && (!state.allProjects || state.allProjects.length === 0)) {
                     loadAllProjects();
                 }
-                app.innerHTML = renderWorkScheduleView() + renderFooter();
+                app.innerHTML = renderWorkScheduleView();
             } else if (state.view === 'settings') {
-                app.innerHTML = renderSettingsView() + renderFooter();
+                app.innerHTML = renderSettingsView();
             } else if (state.view === 'all-projects') {
                 // Ensure all projects are loaded
                 if (state.user && (!state.allProjects || state.allProjects.length === 0)) {
@@ -3035,12 +3029,15 @@
                 if (state.user && !state.assignmentsLoaded && !state.loadingAssignments) {
                     loadWorkAssignments();
                 }
-                app.innerHTML = renderAllProjectsView() + renderFooter();
+                app.innerHTML = renderAllProjectsView();
             } else if (state.selectedProject) {
-                app.innerHTML = renderInvoiceView() + renderFooter();
+                app.innerHTML = renderInvoiceView();
             } else {
-                app.innerHTML = renderProjectsView() + renderFooter();
+                app.innerHTML = renderProjectsView();
             }
+            
+            // Update version footer
+            updateVersionFooter();
             
             if (state.viewingAttachment) {
                 app.innerHTML += renderAttachmentModal();
