@@ -363,7 +363,7 @@ export function initOrdersComponent(context) {
             const orderDateObj = order.orderDate ? new Date(order.orderDate) : new Date();
             const orderDate = `${String(orderDateObj.getDate()).padStart(2, '0')}/${String(orderDateObj.getMonth() + 1).padStart(2, '0')}/${orderDateObj.getFullYear()}`;
 
-            // Create HTML content with better RTL handling
+            // Create HTML content with proper RTL and Unicode direction marks
             const htmlContent = `
                 <!DOCTYPE html>
                 <html dir="rtl" lang="he">
@@ -377,48 +377,98 @@ export function initOrdersComponent(context) {
                             direction: rtl;
                             padding: 3cm 1.5cm 2cm 1.5cm;
                             font-size: 12px;
-                            line-height: 1.5;
+                            line-height: 1.6;
                         }
                         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-                        .header-title { font-size: 16px; font-weight: bold; }
+                        .header-title { font-size: 16px; font-weight: bold; direction: rtl; unicode-bidi: embed; }
                         .header-date { font-size: 11px; }
-                        .info-box { border: 1px solid black; padding: 10px; margin-bottom: 5px; display: table; width: 100%; }
-                        .info-row { display: table-row; }
-                        .info-cell { display: table-cell; padding: 5px; }
+                        .info-box { 
+                            border: 1px solid black; 
+                            padding: 12px; 
+                            margin-bottom: 5px; 
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                        }
+                        .info-cell { 
+                            flex: 1;
+                            padding: 0 10px;
+                            direction: rtl;
+                            unicode-bidi: embed;
+                        }
                         .info-cell:first-child { text-align: right; }
                         .info-cell:last-child { text-align: left; }
-                        .project { font-size: 14px; font-weight: bold; margin: 25px 0 20px 0; text-align: right; }
-                        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 10px; }
-                        th { background: #e5e5e5; font-weight: bold; border: 1px solid black; padding: 8px; text-align: right; }
-                        td { border: 1px solid black; padding: 6px; text-align: right; }
-                        .total-box { border: 1px solid black; padding: 10px; display: inline-block; margin-bottom: 40px; float: left; }
+                        .project { 
+                            font-size: 14px; 
+                            font-weight: bold; 
+                            margin: 25px 0 20px 0; 
+                            text-align: right;
+                            direction: rtl;
+                            unicode-bidi: embed;
+                        }
+                        table { 
+                            width: 100%; 
+                            border-collapse: collapse; 
+                            margin-bottom: 20px; 
+                            font-size: 10px;
+                            direction: rtl;
+                        }
+                        th { 
+                            background: #e5e5e5; 
+                            font-weight: bold; 
+                            border: 1px solid black; 
+                            padding: 8px; 
+                            text-align: right;
+                        }
+                        td { 
+                            border: 1px solid black; 
+                            padding: 6px; 
+                            text-align: right;
+                            direction: rtl;
+                            unicode-bidi: embed;
+                        }
+                        .total-box { 
+                            border: 1px solid black; 
+                            padding: 10px; 
+                            display: inline-block; 
+                            margin-bottom: 40px; 
+                            float: left;
+                            direction: rtl;
+                            unicode-bidi: embed;
+                        }
                         .clear { clear: both; }
-                        .section { margin-bottom: 20px; text-align: right; }
+                        .section { 
+                            margin-bottom: 20px; 
+                            text-align: right;
+                            direction: rtl;
+                            unicode-bidi: embed;
+                        }
                         .section-title { font-weight: bold; margin-bottom: 8px; }
-                        .section-content { font-size: 10px; white-space: pre-wrap; }
+                        .section-content { 
+                            font-size: 10px; 
+                            white-space: pre-wrap;
+                            direction: rtl;
+                            unicode-bidi: embed;
+                        }
                     </style>
                 </head>
                 <body>
                     <div class="header">
                         <div class="header-date">${orderDate}</div>
-                        <div class="header-title">הזמנת רכש מס׳ ${order.orderNumber}</div>
+                        <div class="header-title">&#x202B;הזמנת רכש מס' ${order.orderNumber}&#x202C;</div>
                     </div>
                     
                     <div class="info-box">
-                        <div class="info-row">
-                            <div class="info-cell"><strong>שם הספק׳</strong> ${order.supplierName || 'ספק'}</div>
-                            <div class="info-cell"><strong>תנאי תשלום׳</strong> ${order.paymentTerms || 'שוטף +30'}</div>
-                        </div>
+                        <div class="info-cell"><strong>שם הספק:</strong> ${order.supplierName || 'ספק'}</div>
+                        <div class="info-cell"><strong>תנאי תשלום:</strong> &#x202B;${order.paymentTerms || 'שוטף +30'}&#x202C;</div>
                     </div>
                     
                     <div class="info-box">
-                        <div class="info-row">
-                            <div class="info-cell"><strong>איש קשר׳</strong> ${supplier?.contactName || ''}</div>
-                            <div class="info-cell"><strong>דוא״ל׳</strong> ${supplier?.email || ''}</div>
-                        </div>
+                        <div class="info-cell"><strong>איש קשר:</strong> ${supplier?.contactName || ''}</div>
+                        <div class="info-cell"><strong>דוא״ל:</strong> ${supplier?.email || ''}</div>
                     </div>
                     
-                    <div class="project">פרויקט׳ ${order.projectName || 'פרויקט'}</div>
+                    <div class="project">&#x202B;פרויקט: ${order.projectName || 'פרויקט'}&#x202C;</div>
                     
                     <table>
                         <thead>
@@ -435,7 +485,7 @@ export function initOrdersComponent(context) {
                             ${order.items.map((item, index) => `
                                 <tr>
                                     <td>${index + 1}</td>
-                                    <td>${item.description || ''}</td>
+                                    <td>&#x202B;${item.description || ''}&#x202C;</td>
                                     <td>${item.unit || 'יח׳'}</td>
                                     <td>${item.quantity || 1}</td>
                                     <td>${formatNumber(item.price || 0)}</td>
@@ -446,27 +496,27 @@ export function initOrdersComponent(context) {
                     </table>
                     
                     <div class="total-box">
-                        <strong>סה״כ׳</strong> ₪${formatNumber(order.totalSum || 0)}
+                        <strong>סה״כ:</strong> ₪${formatNumber(order.totalSum || 0)}
                     </div>
                     <div class="clear"></div>
                     
                     ${order.comments ? `
                     <div class="section">
-                        <div class="section-title">הערות׳</div>
-                        <div class="section-content">${order.comments}</div>
+                        <div class="section-title">הערות:</div>
+                        <div class="section-content">&#x202B;${order.comments}&#x202C;</div>
                     </div>
                     ` : ''}
                     
                     ${order.deliveryAddress ? `
                     <div class="section">
-                        <div class="section-title">כתובת משלוח׳</div>
-                        <div class="section-content">${order.deliveryAddress}</div>
+                        <div class="section-title">כתובת משלוח:</div>
+                        <div class="section-content">&#x202B;${order.deliveryAddress}&#x202C;</div>
                     </div>
                     ` : ''}
                     
                     ${order.orderedBy ? `
                     <div class="section">
-                        <strong>מזמין׳</strong> ${order.orderedBy}
+                        <strong>מזמין:</strong> &#x202B;${order.orderedBy}&#x202C;
                     </div>
                     ` : ''}
                 </body>
