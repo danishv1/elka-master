@@ -381,7 +381,7 @@ export function initOrdersComponent(context) {
                         body { 
                             font-family: 'Noto Sans Hebrew', Arial, sans-serif; 
                             direction: rtl;
-                            padding: 4.5cm 1.5cm 2cm 1.5cm;
+                            padding: 4.5cm 3cm 2cm 3cm;
                             font-size: 12px;
                             line-height: 1.6;
                         }
