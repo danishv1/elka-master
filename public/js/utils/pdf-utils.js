@@ -77,6 +77,44 @@ export function reverseHebrewText(text) {
 }
 
 /**
+ * Split text into segments of Hebrew and non-Hebrew (numbers/Latin)
+ * Returns array of {text, isHebrew} objects
+ */
+export function splitHebrewAndNumbers(text) {
+    if (!text) return [];
+    
+    const segments = [];
+    let currentSegment = '';
+    let currentIsHebrew = null;
+    
+    for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        const isHebrewChar = /[\u0590-\u05FF]/.test(char); // Hebrew Unicode range
+        
+        if (currentIsHebrew === null) {
+            // First character
+            currentSegment = char;
+            currentIsHebrew = isHebrewChar;
+        } else if (currentIsHebrew === isHebrewChar) {
+            // Same type, add to current segment
+            currentSegment += char;
+        } else {
+            // Type changed, save current segment and start new one
+            segments.push({ text: currentSegment, isHebrew: currentIsHebrew });
+            currentSegment = char;
+            currentIsHebrew = isHebrewChar;
+        }
+    }
+    
+    // Add last segment
+    if (currentSegment) {
+        segments.push({ text: currentSegment, isHebrew: currentIsHebrew });
+    }
+    
+    return segments;
+}
+
+/**
  * Format numbers with thousand separators
  */
 export function formatNumber(num) {

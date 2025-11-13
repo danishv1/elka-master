@@ -363,93 +363,114 @@ export function initOrdersComponent(context) {
             const orderDateObj = order.orderDate ? new Date(order.orderDate) : new Date();
             const orderDate = `${String(orderDateObj.getDate()).padStart(2, '0')}/${String(orderDateObj.getMonth() + 1).padStart(2, '0')}/${orderDateObj.getFullYear()}`;
 
-            // Create HTML content
+            // Create HTML content with better RTL handling
             const htmlContent = `
-                <div style="direction: rtl; font-family: 'Noto Sans Hebrew', sans-serif; padding: 3cm 1.5cm 2cm 1.5cm; font-size: 12px;">
-                    <!-- Header -->
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 30px;">
-                        <div style="font-size: 11px;">${orderDate}</div>
-                        <div style="font-size: 16px; font-weight: bold;">הזמנת רכש מס' ${order.orderNumber}</div>
+                <!DOCTYPE html>
+                <html dir="rtl" lang="he">
+                <head>
+                    <meta charset="UTF-8">
+                    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Hebrew:wght@400;700&display=swap" rel="stylesheet">
+                    <style>
+                        * { box-sizing: border-box; }
+                        body { 
+                            font-family: 'Noto Sans Hebrew', Arial, sans-serif; 
+                            direction: rtl;
+                            padding: 3cm 1.5cm 2cm 1.5cm;
+                            font-size: 12px;
+                            line-height: 1.5;
+                        }
+                        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+                        .header-title { font-size: 16px; font-weight: bold; }
+                        .header-date { font-size: 11px; }
+                        .info-box { border: 1px solid black; padding: 10px; margin-bottom: 5px; display: table; width: 100%; }
+                        .info-row { display: table-row; }
+                        .info-cell { display: table-cell; padding: 5px; }
+                        .info-cell:first-child { text-align: right; }
+                        .info-cell:last-child { text-align: left; }
+                        .project { font-size: 14px; font-weight: bold; margin: 25px 0 20px 0; text-align: right; }
+                        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 10px; }
+                        th { background: #e5e5e5; font-weight: bold; border: 1px solid black; padding: 8px; text-align: right; }
+                        td { border: 1px solid black; padding: 6px; text-align: right; }
+                        .total-box { border: 1px solid black; padding: 10px; display: inline-block; margin-bottom: 40px; float: left; }
+                        .clear { clear: both; }
+                        .section { margin-bottom: 20px; text-align: right; }
+                        .section-title { font-weight: bold; margin-bottom: 8px; }
+                        .section-content { font-size: 10px; white-space: pre-wrap; }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <div class="header-date">${orderDate}</div>
+                        <div class="header-title">הזמנת רכש מס׳ ${order.orderNumber}</div>
                     </div>
                     
-                    <!-- Supplier Box -->
-                    <div style="border: 1px solid black; padding: 8px; margin-bottom: 5px;">
-                        <div style="display: flex; justify-content: space-between;">
-                            <div>תנאי תשלום: ${order.paymentTerms || 'שוטף +30'}</div>
-                            <div><strong>שם הספק:</strong> ${order.supplierName || 'ספק'}</div>
+                    <div class="info-box">
+                        <div class="info-row">
+                            <div class="info-cell"><strong>שם הספק׳</strong> ${order.supplierName || 'ספק'}</div>
+                            <div class="info-cell"><strong>תנאי תשלום׳</strong> ${order.paymentTerms || 'שוטף +30'}</div>
                         </div>
                     </div>
                     
-                    <!-- Contact Box -->
-                    <div style="border: 1px solid black; padding: 8px; margin-bottom: 25px;">
-                        <div style="display: flex; justify-content: space-between;">
-                            <div>דוא״ל: ${supplier?.email || ''}</div>
-                            <div><strong>איש קשר:</strong> ${supplier?.contactName || ''}</div>
+                    <div class="info-box">
+                        <div class="info-row">
+                            <div class="info-cell"><strong>איש קשר׳</strong> ${supplier?.contactName || ''}</div>
+                            <div class="info-cell"><strong>דוא״ל׳</strong> ${supplier?.email || ''}</div>
                         </div>
                     </div>
                     
-                    <!-- Project -->
-                    <div style="font-size: 14px; font-weight: bold; margin-bottom: 20px; text-align: right;">
-                        פרויקט: ${order.projectName || 'פרויקט'}
-                    </div>
+                    <div class="project">פרויקט׳ ${order.projectName || 'פרויקט'}</div>
                     
-                    <!-- Table -->
-                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 10px;">
+                    <table>
                         <thead>
-                            <tr style="background: #e5e5e5; font-weight: bold;">
-                                <th style="border: 1px solid black; padding: 8px; text-align: right;">מ"ס</th>
-                                <th style="border: 1px solid black; padding: 8px; text-align: right;">תיאור פריט</th>
-                                <th style="border: 1px solid black; padding: 8px; text-align: right;">יח'</th>
-                                <th style="border: 1px solid black; padding: 8px; text-align: right;">כמות</th>
-                                <th style="border: 1px solid black; padding: 8px; text-align: right;">מחיר</th>
-                                <th style="border: 1px solid black; padding: 8px; text-align: right;">סה"כ</th>
+                            <tr>
+                                <th>מ״ס</th>
+                                <th>תיאור פריט</th>
+                                <th>יח׳</th>
+                                <th>כמות</th>
+                                <th>מחיר</th>
+                                <th>סה״כ</th>
                             </tr>
                         </thead>
                         <tbody>
                             ${order.items.map((item, index) => `
                                 <tr>
-                                    <td style="border: 1px solid black; padding: 6px; text-align: right;">${index + 1}</td>
-                                    <td style="border: 1px solid black; padding: 6px; text-align: right;">${item.description || ''}</td>
-                                    <td style="border: 1px solid black; padding: 6px; text-align: right;">${item.unit || 'יח\''}</td>
-                                    <td style="border: 1px solid black; padding: 6px; text-align: right;">${item.quantity || 1}</td>
-                                    <td style="border: 1px solid black; padding: 6px; text-align: right;">${formatNumber(item.price || 0)}</td>
-                                    <td style="border: 1px solid black; padding: 6px; text-align: right;">${formatNumber(item.sum || 0)}</td>
+                                    <td>${index + 1}</td>
+                                    <td>${item.description || ''}</td>
+                                    <td>${item.unit || 'יח׳'}</td>
+                                    <td>${item.quantity || 1}</td>
+                                    <td>${formatNumber(item.price || 0)}</td>
+                                    <td>${formatNumber(item.sum || 0)}</td>
                                 </tr>
                             `).join('')}
                         </tbody>
                     </table>
                     
-                    <!-- Total Sum -->
-                    <div style="margin-bottom: 40px;">
-                        <div style="border: 1px solid black; padding: 8px; display: inline-block; float: left;">
-                            <strong>סה"כ:</strong> ₪${formatNumber(order.totalSum || 0)}
-                        </div>
-                        <div style="clear: both;"></div>
+                    <div class="total-box">
+                        <strong>סה״כ׳</strong> ₪${formatNumber(order.totalSum || 0)}
                     </div>
+                    <div class="clear"></div>
                     
                     ${order.comments ? `
-                    <!-- Comments -->
-                    <div style="margin-bottom: 20px; text-align: right;">
-                        <div style="font-weight: bold; margin-bottom: 5px;">הערות:</div>
-                        <div style="font-size: 10px;">${order.comments}</div>
+                    <div class="section">
+                        <div class="section-title">הערות׳</div>
+                        <div class="section-content">${order.comments}</div>
                     </div>
                     ` : ''}
                     
                     ${order.deliveryAddress ? `
-                    <!-- Address -->
-                    <div style="margin-bottom: 20px; text-align: right;">
-                        <div style="font-weight: bold; margin-bottom: 5px;">כתובת משלוח:</div>
-                        <div style="font-size: 10px;">${order.deliveryAddress}</div>
+                    <div class="section">
+                        <div class="section-title">כתובת משלוח׳</div>
+                        <div class="section-content">${order.deliveryAddress}</div>
                     </div>
                     ` : ''}
                     
                     ${order.orderedBy ? `
-                    <!-- Orderer -->
-                    <div style="text-align: right;">
-                        <strong>מזמין:</strong> ${order.orderedBy}
+                    <div class="section">
+                        <strong>מזמין׳</strong> ${order.orderedBy}
                     </div>
                     ` : ''}
-                </div>
+                </body>
+                </html>
             `;
 
             // Create temporary element
