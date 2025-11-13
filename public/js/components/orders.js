@@ -408,7 +408,8 @@ export function initOrdersComponent(context) {
                         }
                         .header-date { 
                             font-size: 11px;
-                            margin-left: auto;
+                            position: absolute;
+                            left: 0;
                         }
                         .info-box { 
                             border: 1px solid black; 
@@ -420,7 +421,7 @@ export function initOrdersComponent(context) {
                         }
                         .info-cell { 
                             flex: 1;
-                            padding: 0 10px;
+                            padding: 0 5px;
                             direction: rtl;
                             unicode-bidi: embed;
                             white-space: pre;
@@ -563,9 +564,9 @@ export function initOrdersComponent(context) {
                     </div>
                     ` : ''}
                     
-                    ${order.orderedBy ? `
+                    ${order.orderedBy && order.orderedBy.trim() !== '' ? `
                     <div class="section">
-                        <strong>${preserveSpaces(' :מזמין')}</strong>&nbsp;&#x202B;${preserveSpaces(order.orderedBy)}&#x202C;
+                        <strong>${preserveSpaces('מזמין:')}</strong>&nbsp;${preserveSpaces(order.orderedBy)}
                     </div>
                     ` : ''}
                 </body>
