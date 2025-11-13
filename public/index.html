@@ -4601,7 +4601,7 @@
                                 </div>
                             </div>
                             <div class="flex gap-2">
-                                <button onclick="generateOrderPDF('${order.id}')" 
+                                <button onclick="window.appHandlers.orders.generateOrderPDF('${order.id}')" 
                                     class="text-blue-600 hover:text-blue-700 text-sm px-2 py-1 border border-blue-600 rounded">
                                     📄 הורד PDF
                                 </button>
@@ -4925,7 +4925,7 @@
                                                     <td class="p-3">₪${order.totalSum.toFixed(2)}</td>
                                                     <td class="p-3">${order.createdAt?.toDate ? new Date(order.createdAt.toDate()).toLocaleDateString('he-IL') : 'N/A'}</td>
                                                     <td class="p-3">
-                                                        <button onclick="generateOrderPDF('${order.id}')" 
+                                                        <button onclick="window.appHandlers.orders.generateOrderPDF('${order.id}')" 
                                                             class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-sm mr-2">
                                                             📄 PDF
                                                         </button>
@@ -4971,7 +4971,7 @@
                                                         <td class="p-2 text-sm">₪${order.totalSum.toFixed(2)}</td>
                                                         <td class="p-2 text-sm">${order.createdAt?.toDate ? new Date(order.createdAt.toDate()).toLocaleDateString('he-IL') : 'N/A'}</td>
                                                         <td class="p-2">
-                                                            <button onclick="generateOrderPDF('${order.id}')" 
+                                                            <button onclick="window.appHandlers.orders.generateOrderPDF('${order.id}')" 
                                                                 class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 text-xs mr-1">
                                                                 📄
                                                             </button>
