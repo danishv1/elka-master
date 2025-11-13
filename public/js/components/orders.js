@@ -564,11 +564,13 @@ export function initOrdersComponent(context) {
                     </div>
                     ` : ''}
                     
-                    ${order.orderedBy && order.orderedBy.trim() !== '' ? `
+                    ${(order.orderedBy && order.orderedBy.trim() !== '') ? `
                     <div class="section">
-                        <strong>${preserveSpaces('מזמין:')}</strong>&nbsp;${preserveSpaces(order.orderedBy)}
+                        <strong>מזמין:</strong>&nbsp;${order.orderedBy}
                     </div>
                     ` : ''}
+                    
+                    <!-- DEBUG: orderedBy = "${order.orderedBy || 'EMPTY'}" -->
                 </body>
                 </html>
             `;
@@ -580,7 +582,7 @@ export function initOrdersComponent(context) {
 
             // Generate PDF
             const opt = {
-                margin: [45, 30, 20, 30], // [top, left, bottom, right] in mm - 4.5cm top, 3cm sides, 2cm bottom
+                margin: [45, 15, 20, 15], // [top, left, bottom, right] in mm - 4.5cm top, 1.5cm sides, 2cm bottom
                 filename: `Order_${order.orderNumber.replace('/', '-')}.pdf`,
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2, useCORS: true },
