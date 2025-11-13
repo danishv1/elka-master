@@ -460,25 +460,24 @@ export function initOrdersComponent(context) {
                 color: black
             });
 
-            // Payment conditions (left) - CRITICAL: RTL positioning
-            // Final display should be: "שוטף +30 :תנאי תשלום" (reading right to left)
-            // Which in LTR positioning is: label on right, then number, then Hebrew
+            // Payment conditions (left) - CRITICAL: Complete RTL ordering
+            // Visual RTL result should be: "30+ שוטף תנאי תשלום:"
+            // Draw order (LTR): label → Hebrew → plus → number
             
             const paymentLabel = reverseHebrewText('תנאי תשלום: ');
-            const paymentHebrewPart = reverseHebrewText('שוטף +');
+            const paymentHebrewPart = reverseHebrewText('שוטף');
+            const paymentPlusPart = ' +';
             const paymentNumberPart = '30';
             
             const paymentLabelWidth = font.widthOfTextAtSize(paymentLabel, 10);
-            const paymentNumberWidth = font.widthOfTextAtSize(paymentNumberPart, 10);
             const paymentHebrewWidth = font.widthOfTextAtSize(paymentHebrewPart, 10);
+            const paymentPlusWidth = font.widthOfTextAtSize(paymentPlusPart, 10);
+            const paymentNumberWidth = font.widthOfTextAtSize(paymentNumberPart, 10);
             
-            // Calculate total width
-            const totalWidth = paymentLabelWidth + paymentNumberWidth + paymentHebrewWidth;
-            
-            // Start from right and work leftward
+            // Draw in LTR order to achieve RTL visual result
             let paymentX = marginSide + 10;
             
-            // Draw label first (rightmost in visual RTL)
+            // 1. Label (תנאי תשלום:)
             page.drawText(paymentLabel, {
                 x: paymentX,
                 y: y - 17,
@@ -488,18 +487,28 @@ export function initOrdersComponent(context) {
             });
             paymentX += paymentLabelWidth;
             
-            // Draw number in middle
-            page.drawText(paymentNumberPart, {
+            // 2. Hebrew part (שוטף)
+            page.drawText(paymentHebrewPart, {
                 x: paymentX,
                 y: y - 17,
                 size: 10,
                 font,
                 color: black
             });
-            paymentX += paymentNumberWidth;
+            paymentX += paymentHebrewWidth;
             
-            // Draw Hebrew part last (leftmost in visual RTL)
-            page.drawText(paymentHebrewPart, {
+            // 3. Plus sign ( +)
+            page.drawText(paymentPlusPart, {
+                x: paymentX,
+                y: y - 17,
+                size: 10,
+                font,
+                color: black
+            });
+            paymentX += paymentPlusWidth;
+            
+            // 4. Number (30)
+            page.drawText(paymentNumberPart, {
                 x: paymentX,
                 y: y - 17,
                 size: 10,
