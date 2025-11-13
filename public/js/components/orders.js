@@ -381,7 +381,7 @@ export function initOrdersComponent(context) {
                         body { 
                             font-family: 'Noto Sans Hebrew', Arial, sans-serif; 
                             direction: rtl;
-                            padding: 10px;
+                            padding: 20px;
                             margin: 0;
                             font-size: 12px;
                             line-height: 1.6;
@@ -590,7 +590,7 @@ export function initOrdersComponent(context) {
 
             // Generate PDF
             const opt = {
-                margin: [45, 15, 20, 15], // [top, left, bottom, right] in mm - 4.5cm top, 1.5cm sides, 2cm bottom
+                margin: [10, 10, 10, 10], // [top, left, bottom, right] in mm - 1cm all sides
                 filename: `Order_${order.orderNumber.replace('/', '-')}.pdf`,
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2, useCORS: true },
