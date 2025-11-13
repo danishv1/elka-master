@@ -394,8 +394,8 @@ export function initOrdersComponent(context) {
             const orderDate = `${String(orderDateObj.getDate()).padStart(2, '0')}/${String(orderDateObj.getMonth() + 1).padStart(2, '0')}/${orderDateObj.getFullYear()}`;
 
             // ===== HEADER: "הזמנת רכש מס' XX/XXX" + Date =====
-            // Fix: Use reverseHebrewText to prevent number reversal
-            const headerText = reverseHebrewText(`הזמנת רכש מס' ${order.orderNumber}`);
+            // Fix: Reverse only Hebrew text, concatenate numbers outside
+            const headerText = reverseHebrewText('הזמנת רכש מס\' ') + order.orderNumber;
             page.drawText(headerText, {
                 x: width - marginSide - 200,
                 y,
@@ -427,7 +427,7 @@ export function initOrdersComponent(context) {
 
             // Supplier name (right-aligned)
             const supplierName = order.supplierName || 'ספק';
-            const supplierText = reverseHebrewText(`שם הספק: ${supplierName}`);
+            const supplierText = reverseHebrewText('שם הספק: ') + supplierName;
             const supplierTextWidth = boldFont.widthOfTextAtSize(supplierText, 10);
             page.drawText(supplierText, {
                 x: width - marginSide - 10 - supplierTextWidth,
@@ -462,7 +462,7 @@ export function initOrdersComponent(context) {
             // Contact person (right-aligned)
             const contactPerson = supplier?.contactName || '';
             if (contactPerson) {
-                const contactText = reverseHebrewText(`איש קשר: ${contactPerson}`);
+                const contactText = reverseHebrewText('איש קשר: ') + contactPerson;
                 const contactTextWidth = font.widthOfTextAtSize(contactText, 10);
                 page.drawText(contactText, {
                     x: width - marginSide - 10 - contactTextWidth,
@@ -489,7 +489,7 @@ export function initOrdersComponent(context) {
 
             // ===== PROJECT LINE ===== (right-aligned, bold)
             const projectName = order.projectName || 'פרויקט';
-            const projectText = reverseHebrewText(`פרויקט: ${projectName}`);
+            const projectText = reverseHebrewText('פרויקט: ') + projectName;
             const projectTextWidth = boldFont.widthOfTextAtSize(projectText, 10);
             page.drawText(projectText, {
                 x: width - marginSide - 10 - projectTextWidth,
@@ -686,7 +686,7 @@ export function initOrdersComponent(context) {
 
             // ===== ORDERING PERSON (מזמין) ===== (right-aligned)
             if (order.orderedBy) {
-                const ordererText = reverseHebrewText(`מזמין: ${order.orderedBy}`);
+                const ordererText = reverseHebrewText('מזמין: ') + order.orderedBy;
                 const ordererWidth = boldFont.widthOfTextAtSize(ordererText, 10);
                 page.drawText(ordererText, {
                     x: width - marginSide - 10 - ordererWidth,
