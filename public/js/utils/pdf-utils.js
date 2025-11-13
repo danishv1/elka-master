@@ -16,14 +16,29 @@ export async function loadHebrewFont() {
 
     try {
         console.log('Fetching Hebrew font (Rubik Regular)...');
-        const fontUrl = 'https://fonts.gstatic.com/s/rubik/v28/iJWZBXyIfDnIV5PNhY1KTN7Z-Yh-B4iFWUU.ttf';
-        const response = await fetch(fontUrl);
-        if (!response.ok) {
-            throw new Error('Failed to fetch Hebrew font');
+        // Try multiple font URLs in order of preference
+        const fontUrls = [
+            'https://fonts.gstatic.com/s/rubik/v29/iJWZBXyIfDnIV5PNhY1KTN7Z-Yh-B4iFWUU.ttf',
+            'https://fonts.gstatic.com/s/rubik/v30/iJWZBXyIfDnIV5PNhY1KTN7Z-Yh-B4iFWUU.ttf',
+            'https://github.com/google/fonts/raw/main/ofl/rubik/Rubik-Regular.ttf'
+        ];
+        
+        let lastError;
+        for (const fontUrl of fontUrls) {
+            try {
+                console.log(`Trying font URL: ${fontUrl}`);
+                const response = await fetch(fontUrl);
+                if (response.ok) {
+                    hebrewFontBytes = await response.arrayBuffer();
+                    console.log('Hebrew font (Regular) loaded successfully from:', fontUrl);
+                    return hebrewFontBytes;
+                }
+            } catch (err) {
+                lastError = err;
+                console.warn(`Failed to load from ${fontUrl}:`, err);
+            }
         }
-        hebrewFontBytes = await response.arrayBuffer();
-        console.log('Hebrew font (Regular) loaded successfully');
-        return hebrewFontBytes;
+        throw lastError || new Error('Failed to fetch Hebrew font from all sources');
     } catch (error) {
         console.error('Error loading Hebrew font:', error);
         throw error;
@@ -41,14 +56,29 @@ export async function loadHebrewBoldFont() {
 
     try {
         console.log('Fetching Hebrew Bold font (Rubik Bold)...');
-        const fontUrl = 'https://fonts.gstatic.com/s/rubik/v28/iJWZBXyIfDnIV5PNhY1KTN7Z-Yh-NYiFWUUxJI0.ttf';
-        const response = await fetch(fontUrl);
-        if (!response.ok) {
-            throw new Error('Failed to fetch Hebrew Bold font');
+        // Try multiple font URLs in order of preference
+        const fontUrls = [
+            'https://fonts.gstatic.com/s/rubik/v29/iJWZBXyIfDnIV5PNhY1KTN7Z-Yh-NYiFWUUxJI0.ttf',
+            'https://fonts.gstatic.com/s/rubik/v30/iJWZBXyIfDnIV5PNhY1KTN7Z-Yh-NYiFWUUxJI0.ttf',
+            'https://github.com/google/fonts/raw/main/ofl/rubik/Rubik-Bold.ttf'
+        ];
+        
+        let lastError;
+        for (const fontUrl of fontUrls) {
+            try {
+                console.log(`Trying font URL: ${fontUrl}`);
+                const response = await fetch(fontUrl);
+                if (response.ok) {
+                    hebrewBoldFontBytes = await response.arrayBuffer();
+                    console.log('Hebrew font (Bold) loaded successfully from:', fontUrl);
+                    return hebrewBoldFontBytes;
+                }
+            } catch (err) {
+                lastError = err;
+                console.warn(`Failed to load from ${fontUrl}:`, err);
+            }
         }
-        hebrewBoldFontBytes = await response.arrayBuffer();
-        console.log('Hebrew font (Bold) loaded successfully');
-        return hebrewBoldFontBytes;
+        throw lastError || new Error('Failed to fetch Hebrew Bold font from all sources');
     } catch (error) {
         console.error('Error loading Hebrew Bold font:', error);
         throw error;
