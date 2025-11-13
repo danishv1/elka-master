@@ -381,7 +381,7 @@ export function initOrdersComponent(context) {
                         body { 
                             font-family: 'Noto Sans Hebrew', Arial, sans-serif; 
                             direction: rtl;
-                            padding: 3cm 1.5cm 2cm 1.5cm;
+                            padding: 4.5cm 1.5cm 2cm 1.5cm;
                             font-size: 12px;
                             line-height: 1.6;
                         }
@@ -476,25 +476,25 @@ export function initOrdersComponent(context) {
                 <body>
                     <div class="header">
                         <div class="header-date">${orderDate}</div>
-                        <div class="header-title">&#x202B;הזמנת רכש מס' ${order.orderNumber}&#x202C;</div>
+                        <div class="header-title">${preserveSpaces(' :\'הזמנת רכש מס')} ${order.orderNumber}&#x202C;</div>
                     </div>
                     
                     <div class="info-box">
-                        <div class="info-cell"><strong>${preserveSpaces('שם הספק')}</strong>&nbsp;${preserveSpaces(order.supplierName || 'ספק')}</div>
-                        <div class="info-cell"><strong>${preserveSpaces('תנאי תשלום')}</strong>&nbsp;&#x202B;${preserveSpaces(order.paymentTerms || 'שוטף +30')}&#x202C;</div>
+                        <div class="info-cell"><strong>${preserveSpaces(' :שם הספק')}</strong>&nbsp;${preserveSpaces(order.supplierName || 'ספק')}</div>
+                        <div class="info-cell"><strong>${preserveSpaces(' :תנאי תשלום')}</strong>&nbsp;&#x202B;${preserveSpaces(order.paymentTerms || 'שוטף +30')}&#x202C;</div>
                     </div>
                     
                     <div class="info-box">
-                        <div class="info-cell"><strong>${preserveSpaces('איש קשר')}</strong>&nbsp;${preserveSpaces(supplier?.contactName || '')}</div>
-                        <div class="info-cell"><strong>דוא״ל</strong>&nbsp;${supplier?.email || ''}</div>
+                        <div class="info-cell"><strong>${preserveSpaces(' :איש קשר')}</strong>&nbsp;${preserveSpaces(supplier?.contactName || '')}</div>
+                        <div class="info-cell"><strong>${preserveSpaces(' :דוא״ל')}</strong>&nbsp;${supplier?.email || ''}</div>
                     </div>
                     
-                    <div class="project">&#x202B;${preserveSpaces('פרויקט')}&nbsp;${preserveSpaces(order.projectName || 'פרויקט')}&#x202C;</div>
+                    <div class="project">&#x202B;${preserveSpaces(' :פרויקט')}&nbsp;${preserveSpaces(order.projectName || 'פרויקט')}&#x202C;</div>
                     
                     <table>
                         <thead>
                             <tr>
-                                <th>מ״ס</th>
+                                <th>מס"ד</th>
                                 <th>${preserveSpaces('תיאור פריט')}</th>
                                 <th>יח׳</th>
                                 <th>כמות</th>
@@ -517,7 +517,7 @@ export function initOrdersComponent(context) {
                     </table>
                     
                     <div class="total-box">
-                        <strong>סה״כ</strong>&nbsp;₪${formatNumber(order.totalSum || 0)}
+                        <strong>&nbsp;סה״כ&nbsp;</strong>&nbsp;₪${formatNumber(order.totalSum || 0)}
                     </div>
                     <div class="clear"></div>
                     
@@ -530,14 +530,14 @@ export function initOrdersComponent(context) {
                     
                     ${order.deliveryAddress ? `
                     <div class="section">
-                        <div class="section-title">${preserveSpaces('כתובת משלוח')}</div>
+                        <div class="section-title">${preserveSpaces(' :כתובת משלוח')}</div>
                         <div class="section-content">&#x202B;${preserveSpaces(order.deliveryAddress)}&#x202C;</div>
                     </div>
                     ` : ''}
                     
                     ${order.orderedBy ? `
                     <div class="section">
-                        <strong>${preserveSpaces('מזמין')}</strong>&nbsp;&#x202B;${preserveSpaces(order.orderedBy)}&#x202C;
+                        <strong>${preserveSpaces(' מזמין ')}</strong>&nbsp;&#x202B;${preserveSpaces(order.orderedBy)}&#x202C;
                     </div>
                     ` : ''}
                 </body>
