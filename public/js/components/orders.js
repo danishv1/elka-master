@@ -917,7 +917,7 @@ export function initOrdersComponent(context) {
             });
 
             // "סה"כ" on the right side of box - RAW text
-            const sumLabelText = 'סה"כ:';
+            const sumLabelText = 'גחדדחגדח"כ:';
             const sumLabelWidth = boldFont.widthOfTextAtSize(sumLabelText, 11);
             page.drawText(sumLabelText, {
                 x: sumBoxX + sumBoxWidth - 10 - sumLabelWidth,
