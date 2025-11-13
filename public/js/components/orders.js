@@ -460,25 +460,42 @@ export function initOrdersComponent(context) {
                 color: black
             });
 
-            // Payment conditions (left) - dynamic value, RTL layout
+            // Payment conditions (left) - CRITICAL: draw Hebrew and number separately
             const paymentLabel = reverseHebrewText('תנאי תשלום: ');
-            const paymentValue = order.paymentTerms || 'שוטף +30';
-            const paymentValueWidth = font.widthOfTextAtSize(paymentValue, 10);
-            const paymentLabelWidth = font.widthOfTextAtSize(paymentLabel, 10);
-            const totalPaymentWidth = paymentValueWidth + paymentLabelWidth;
+            const paymentTerms = order.paymentTerms || 'שוטף +30';
             
-            // Draw value first (on the right in LTR positioning)
-            page.drawText(paymentValue, {
-                x: marginSide + 10,
+            // Split payment terms into Hebrew part and number part
+            // For "שוטף +30", we need: "שוטף +" (Hebrew) and "30" (number)
+            const paymentHebrewPart = reverseHebrewText('שוטף +');
+            const paymentNumberPart = '30';
+            
+            const paymentHebrewWidth = font.widthOfTextAtSize(paymentHebrewPart, 10);
+            const paymentNumberWidth = font.widthOfTextAtSize(paymentNumberPart, 10);
+            const paymentLabelWidth = font.widthOfTextAtSize(paymentLabel, 10);
+            
+            // Draw in order: Hebrew part, number part, then label
+            let paymentX = marginSide + 10;
+            
+            page.drawText(paymentHebrewPart, {
+                x: paymentX,
                 y: y - 17,
                 size: 10,
                 font,
                 color: black
             });
+            paymentX += paymentHebrewWidth;
             
-            // Draw label after value (on the left in LTR positioning)
+            page.drawText(paymentNumberPart, {
+                x: paymentX,
+                y: y - 17,
+                size: 10,
+                font,
+                color: black
+            });
+            paymentX += paymentNumberWidth;
+            
             page.drawText(paymentLabel, {
-                x: marginSide + 10 + paymentValueWidth,
+                x: paymentX,
                 y: y - 17,
                 size: 10,
                 font,
@@ -535,7 +552,7 @@ export function initOrdersComponent(context) {
                 });
             }
 
-            y -= box2Height + 5;
+            y -= box2Height + 25;
 
             // ===== PROJECT LINE ===== (right-aligned, bold, larger)
             const projectName = order.projectName || 'פרויקט';
@@ -549,7 +566,7 @@ export function initOrdersComponent(context) {
                 color: black
             });
 
-            y -= 15;
+            y -= 25;
 
             // ===== TABLE =====
             const tableTop = y;
