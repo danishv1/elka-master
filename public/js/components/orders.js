@@ -394,10 +394,23 @@ export function initOrdersComponent(context) {
             const orderDate = `${String(orderDateObj.getDate()).padStart(2, '0')}/${String(orderDateObj.getMonth() + 1).padStart(2, '0')}/${orderDateObj.getFullYear()}`;
 
             // ===== HEADER: "הזמנת רכש מס' XX/XXX" + Date =====
-            // Fix: Reverse only Hebrew text, concatenate numbers outside
-            const headerText = reverseHebrewText('הזמנת רכש מס\' ') + order.orderNumber;
-            page.drawText(headerText, {
+            // Fix: Draw Hebrew text and order number separately to prevent number reversal
+            const headerLabel = reverseHebrewText('הזמנת רכש מס\' ');
+            const headerLabelWidth = boldFont.widthOfTextAtSize(headerLabel, 14);
+            const orderNumberWidth = boldFont.widthOfTextAtSize(order.orderNumber, 14);
+            
+            // Draw Hebrew label (reversed)
+            page.drawText(headerLabel, {
                 x: width - marginSide - 200,
+                y,
+                size: 14,
+                font: boldFont,
+                color: black
+            });
+            
+            // Draw order number separately (not reversed, LTR)
+            page.drawText(order.orderNumber, {
+                x: width - marginSide - 200 + headerLabelWidth,
                 y,
                 size: 14,
                 font: boldFont,
