@@ -389,11 +389,23 @@ export function initOrdersComponent(context) {
             const formattedTotal = formatNumberLocal(parseFloat(order.totalSum) || 0);
 
             // Create HTML content with proper RTL and Unicode direction marks
-            // NOTE: Do NOT use full HTML document structure - just a div with content
+            // Restoring v2.0.7 structure that was working
             const htmlContent = `
-                <div dir="rtl" style="font-family: 'Noto Sans Hebrew', Arial, sans-serif; direction: rtl; padding: 20px; font-size: 12px; line-height: 1.6; background: white;">
+                <!DOCTYPE html>
+                <html dir="rtl" lang="he">
+                <head>
+                    <meta charset="UTF-8">
+                    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Hebrew:wght@400;700&display=swap" rel="stylesheet">
                     <style>
                         * { box-sizing: border-box; }
+                        body {
+                            font-family: 'Noto Sans Hebrew', Arial, sans-serif;
+                            direction: rtl;
+                            padding: 3cm 1.5cm 2cm 1.5cm;
+                            font-size: 12px;
+                            line-height: 1.6;
+                            margin: 0;
+                        }
                         .header { 
                             display: flex; 
                             justify-content: space-between; 
@@ -503,7 +515,8 @@ export function initOrdersComponent(context) {
                             unicode-bidi: embed;
                         }
                     </style>
-
+                </head>
+                <body>
                     <div class="header">
                         <div class="header-title">${preserveSpaces(' :\'הזמנת רכש מס')} ${order.orderNumber}&#x202C;</div>
                         <div class="header-date">${orderDate}</div>
@@ -575,7 +588,8 @@ export function initOrdersComponent(context) {
                     ` : ''}
 
                     <!-- DEBUG: orderedBy = "${order.orderedBy || 'EMPTY'}" -->
-                </div>
+                </body>
+                </html>
             `;
 
             console.log('✅ HTML content length:', htmlContent.length);
@@ -590,52 +604,15 @@ export function initOrdersComponent(context) {
             }
             console.log('✅ html2pdf library loaded');
 
-            // Clean up any existing temp elements first
-            const existingTemps = document.querySelectorAll('.pdf-temp-element, .pdf-backdrop');
-            existingTemps.forEach(el => el.remove());
-            console.log('✅ Cleaned up', existingTemps.length, 'existing temp elements');
-
-            // Create backdrop to block interaction during PDF generation
-            const backdrop = document.createElement('div');
-            backdrop.className = 'pdf-backdrop';
-            backdrop.style.position = 'fixed';
-            backdrop.style.top = '0';
-            backdrop.style.left = '0';
-            backdrop.style.width = '100vw';
-            backdrop.style.height = '100vh';
-            backdrop.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
-            backdrop.style.zIndex = '9998';
-            backdrop.style.display = 'flex';
-            backdrop.style.alignItems = 'center';
-            backdrop.style.justifyContent = 'center';
-            document.body.appendChild(backdrop);
-
-            // Create temporary element ON SCREEN (html2canvas needs visible elements)
+            // Create temporary element - SIMPLE approach like v2.0.7
             const element = document.createElement('div');
-            element.className = 'pdf-temp-element';
-            element.style.position = 'fixed';
-            element.style.top = '50%';
-            element.style.left = '50%';
-            element.style.transform = 'translate(-50%, -50%)';
-            element.style.width = '210mm'; // A4 width
-            element.style.backgroundColor = 'white';
-            element.style.zIndex = '9999';
-            element.style.boxShadow = '0 0 20px rgba(0,0,0,0.3)';
-            element.style.maxHeight = '90vh';
-            element.style.overflow = 'auto';
             element.innerHTML = htmlContent;
             document.body.appendChild(element);
-            console.log('✅ Temp element created and appended ON SCREEN');
-            console.log('✅ Element children count:', element.children.length);
+            console.log('✅ Temp element created and appended (simple, no positioning)');
 
-            // Wait longer for fonts to load (increased from 500ms to 1000ms)
-            console.log('⏳ Waiting for fonts to load...');
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            console.log('✅ Font wait complete');
-
-            // Generate PDF
+            // Generate PDF with margin: 0 (CSS padding in body handles spacing)
             const opt = {
-                margin: [10, 10, 10, 10], // [top, left, bottom, right] in mm - 1cm all sides
+                margin: 0,  // KEY: Let CSS padding handle margins like v2.0.7
                 filename: `Order_${order.orderNumber.replace('/', '-')}.pdf`,
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2, useCORS: true },
@@ -647,16 +624,9 @@ export function initOrdersComponent(context) {
             await html2pdf().set(opt).from(element).save();
             console.log('✅ html2pdf conversion complete');
 
-            // Clean up - remove both element and backdrop
-            setTimeout(() => {
-                if (element.parentNode) {
-                    element.parentNode.removeChild(element);
-                }
-                if (backdrop.parentNode) {
-                    backdrop.parentNode.removeChild(backdrop);
-                }
-                console.log('✅ Cleanup complete');
-            }, 100);
+            // Clean up - simple removal like v2.0.7
+            document.body.removeChild(element);
+            console.log('✅ Cleanup complete');
 
             console.log('✅ HTML PDF generated successfully');
 

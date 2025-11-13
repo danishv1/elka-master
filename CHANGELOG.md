@@ -5,6 +5,23 @@ All notable changes to the Invoice Manager project will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.13] - 2025-11-13
+
+### Fixed
+- **CRITICAL FIX**: Reverted to v2.0.7 working approach while keeping formatNumber fix
+- Restored full HTML document structure (<!DOCTYPE>, <html>, <head>, <body>)
+- Removed all inline positioning styles that were breaking html2canvas
+- Removed backdrop overlay - not needed
+- Set html2pdf margin to 0 (CSS padding in body handles spacing)
+- Restored CSS padding: 3cm top, 1.5cm sides, 2cm bottom
+
+### Changed
+- Element creation: simple div.innerHTML = htmlContent, no positioning
+- Cleanup: simple document.body.removeChild(element)
+- This matches the v2.0.7 approach that was generating PDFs successfully
+
+---
+
 ## [2.1.12] - 2025-11-13
 
 ### Fixed
